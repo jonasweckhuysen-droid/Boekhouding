@@ -23,10 +23,12 @@ jobs:
           cache: "npm"
 
       - name: Install dependencies
-        run: npm install
-  
+        run: npm ci
+        working-directory: ${{ github.workspace }}  # root van repo
+
       - name: Build project
         run: npm run build
+        working-directory: ${{ github.workspace }}
 
       - name: Deploy to GitHub Pages
         uses: actions/deploy-pages@v4
