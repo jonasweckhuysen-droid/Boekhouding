@@ -1,7 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 export default function App() {
-  const [transactions, setTransactions] = useState([]);
+  const [transactions, setTransactions] = useState(() => {
+  const saved = localStorage.getItem("transactions");
+  return saved ? JSON.parse(saved) : [];
+});
   const [amount, setAmount] = useState(0);
   the [type, setType] = useState("inkomst");
   const [category, setCategory] = useState("Loon");
