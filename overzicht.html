@@ -1,35 +1,30 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Overzicht per Maand</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Boekhouding Overzicht</title>
+  <link rel="stylesheet" href="./style.css">
+  <!-- Font Awesome voor icoontjes -->
+  <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
 </head>
 <body>
-
-<header>
-  <h1>Overzicht</h1>
-  <button class="btn secondary" onclick="goToIndex()">← Terug</button>
-</header>
-
-<main>
-  <table id="overzichtTabel">
-    <thead>
-      <tr>
-        <th>Datum</th>
-        <th>Type</th>
-        <th>Bedrag</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-</main>
-
-<script src="script.js"></script>
-<script>
-  loadOverzicht();
-</script>
-
+  <div class="container">
+    <h1>Boekhouding Overzicht</h1>
+    <table id="overzichtTabel">
+      <thead>
+        <tr>
+          <th>Datum</th>
+          <th>Type</th>
+          <th>Bedrag</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Data wordt hier toegevoegd via JS -->
+      </tbody>
+    </table>
+    <button onclick="window.location.href='index.html'">Terug naar Home</button>
+  </div>
+  <script src="./overzicht.js"></script>
 </body>
 </html>
