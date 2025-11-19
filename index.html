@@ -1,34 +1,90 @@
 <!DOCTYPE html>
 <html lang="nl">
-  <head>
-    <link rel="manifest" href="./manifest.json" />
-    <link rel="icon" href="./icons/icon-192.png" />
-    <meta name="theme-color" content="#1f2937" />
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Boekhouding App</title>
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        background-color: #f0f0f0;
-        margin: 0;
-        padding: 2rem;
-      }
-      h1 {
-        color: #1f2937;
-      }
-    </style>
-  </head>
-  <body>
-    <h1>Boekhouding App</h1>
-    <div id="root"></div>
-    <script src="./main.js"></script>
-    <script>
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('./sw.js').then(function() {
-          console.log('Service Worker registered!');
-        });
-      }
-    </script>
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Boekhouding App</title>
+  <link rel="icon" href="./icons/icon-192.png" />
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #1f2937;
+      color: #fff;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    header {
+      background-color: #0d6efd;
+      width: 100%;
+      padding: 1rem;
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: bold;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    }
+
+    #buttons {
+      margin: 1rem 0;
+    }
+
+    button {
+      background-color: #0d6efd;
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      margin: 0 0.5rem;
+      cursor: pointer;
+      border-radius: 5px;
+      font-size: 1rem;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    #root {
+      width: 90%;
+      max-width: 600px;
+      background-color: #2c3e50;
+      padding: 1rem;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    li {
+      background-color: #34495e;
+      margin: 0.5rem 0;
+      padding: 0.5rem 1rem;
+      border-radius: 5px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    h2 {
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <header>Boekhouding App</header>
+
+  <div id="buttons">
+    <button onclick="filterType('inkomsten')">Inkomsten</button>
+    <button onclick="filterType('uitgaven')">Uitgaven</button>
+    <button onclick="filterType('alle')">Alles</button>
+  </div>
+
+  <div id="root"></div>
+
+  <script src="./main.js"></script>
+</body>
 </html>
