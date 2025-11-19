@@ -11,10 +11,41 @@
 <body>
   <div class="container">
     <h1>Boekhouding App</h1>
-    <button id="btnInkomsten">Inkomsten</button>
-    <button id="btnUitgaven">Uitgaven</button>
+    <div class="buttons">
+      <button id="btnInkomsten">Inkomsten</button>
+      <button id="btnUitgaven">Uitgaven</button>
+    </div>
 
     <ul id="boekhoudingList"></ul>
+  </div>
+
+  <!-- Modal voor invoer -->
+  <div id="invoerModal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h2>Nieuwe Invoer</h2>
+      <form id="invoerForm">
+        <label>Datum</label>
+        <input type="date" id="datum" required>
+        <label>Bedrag (€)</label>
+        <input type="number" step="0.01" id="bedrag" required>
+        <label>Type</label>
+        <select id="type">
+          <option>Lening</option>
+          <option>Verzekering</option>
+          <option>Sparen</option>
+          <option>Sparen Loreana</option>
+          <option>Winkel</option>
+          <option>Dokter</option>
+          <option>Data</option>
+          <option>Boodschappen</option>
+          <option>Benzine</option>
+          <option>Entertainment</option>
+          <option>Overig</option>
+        </select>
+        <button type="submit">Opslaan</button>
+      </form>
+    </div>
   </div>
 
   <script src="/Boekhouding/app.js"></script>
