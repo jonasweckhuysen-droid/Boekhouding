@@ -47,7 +47,12 @@ function renderList() {
   boekhoudingList.innerHTML = '';
   boekhouding.forEach(item => {
     const li = document.createElement('li');
-    li.textContent = `${item.datum} - ${item.type} (${item.categorie}): €${item.bedrag}`;
+    li.className = item.type; // voor kleur per type
+    li.innerHTML = `
+      <span>${item.datum}</span>
+      <span>${item.type} (${item.categorie})</span>
+      <span>€${item.bedrag}</span>
+    `;
     boekhoudingList.appendChild(li);
   });
 }
