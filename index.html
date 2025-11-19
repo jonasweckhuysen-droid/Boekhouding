@@ -15,6 +15,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
+      min-height: 100vh;
     }
 
     header {
@@ -27,11 +28,39 @@
       box-shadow: 0 2px 5px rgba(0,0,0,0.3);
     }
 
+    #form-container {
+      margin: 1rem 0;
+      background-color: #2c3e50;
+      padding: 1rem;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 500px;
+    }
+
+    #form-container input, #form-container select, #form-container button {
+      width: 100%;
+      padding: 0.5rem;
+      margin: 0.5rem 0;
+      border-radius: 5px;
+      border: none;
+      font-size: 1rem;
+    }
+
+    #form-container button {
+      background-color: #0d6efd;
+      color: white;
+      cursor: pointer;
+    }
+
+    #form-container button:hover {
+      background-color: #0056b3;
+    }
+
     #buttons {
       margin: 1rem 0;
     }
 
-    button {
+    #buttons button {
       background-color: #0d6efd;
       color: white;
       border: none;
@@ -42,7 +71,7 @@
       font-size: 1rem;
     }
 
-    button:hover {
+    #buttons button:hover {
       background-color: #0056b3;
     }
 
@@ -72,15 +101,43 @@
     h2 {
       text-align: center;
     }
+
+    .totals {
+      margin-top: 1rem;
+      background-color: #0d6efd;
+      padding: 0.5rem;
+      border-radius: 5px;
+      text-align: center;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
   <header>Boekhouding App</header>
 
+  <div id="form-container">
+    <h3>Nieuwe boeking toevoegen</h3>
+    <input type="date" id="datum" />
+    <input type="number" id="bedrag" placeholder="Bedrag (€)" />
+    <select id="type">
+      <option value="Lening">Lening</option>
+      <option value="Verzekering">Verzekering</option>
+      <option value="Sparen">Sparen</option>
+      <option value="Sparen Loreana">Sparen Loreana</option>
+      <option value="Winkel">Winkel</option>
+      <option value="Dokter">Dokter</option>
+      <option value="Data">Data</option>
+      <option value="Transport">Transport</option>
+      <option value="Entertainment">Entertainment</option>
+      <option value="Overig">Overig</option>
+    </select>
+    <button onclick="addBooking()">Toevoegen</button>
+  </div>
+
   <div id="buttons">
+    <button onclick="filterType('alle')">Alles</button>
     <button onclick="filterType('inkomsten')">Inkomsten</button>
     <button onclick="filterType('uitgaven')">Uitgaven</button>
-    <button onclick="filterType('alle')">Alles</button>
   </div>
 
   <div id="root"></div>
