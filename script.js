@@ -52,10 +52,13 @@ function loadOverzicht() {
 
   data.forEach(entry => {
     const row = document.createElement("tr");
+
+    const cssClass = entry.bedrag >= 0 ? "inkomst" : "uitgave";
+
     row.innerHTML = `
       <td>${entry.datum}</td>
       <td>${entry.type}</td>
-      <td>€ ${entry.bedrag.toFixed(2)}</td>
+      <td class="${cssClass}">€ ${entry.bedrag.toFixed(2)}</td>
     `;
     tbody.appendChild(row);
   });
