@@ -7,10 +7,22 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Boekhouding App</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f0f0f0;
+        margin: 0;
+        padding: 2rem;
+      }
+      h1 {
+        color: #1f2937;
+      }
+    </style>
   </head>
   <body>
+    <h1>Boekhouding App</h1>
     <div id="root"></div>
-    <script type="module" src="./src/main.jsx"></script>
+    <script src="./main.js"></script>
     <script>
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('./sw.js').then(function() {
