@@ -29,8 +29,14 @@ function saveEntry() {
   // Als het een uitgave is → bedrag negatief maken
   const bedrag = soort === "uitgave" ? -Math.abs(bedragRaw) : Math.abs(bedragRaw);
 
-  const entry = { soort, datum, bedrag, type };
-
+  const entry = {
+    soort,
+    datum,
+    bedrag,
+    type,
+    recurring
+};
+  
   let data = JSON.parse(localStorage.getItem("boekhouding")) || [];
   data.push(entry);
   localStorage.setItem("boekhouding", JSON.stringify(data));
@@ -66,3 +72,39 @@ function loadOverzicht() {
 }
 
 updateSaldo();
+function applyRecurring() {
+    const entries = JSON.parse(localStorage.getItem("boekhouding") || "[]");
+    let changed = false;
+
+    entries.forEach(entry => {
+        if (entry.recurring) {
+            const lastDate = new Date(entry.datum);
+            const now = new Date();
+
+            // Check of we minstens 1 maand verder zijn
+            while (
+                lastDate.getFullYear() < now.getFullYear() ||
+                (lastDate.getFullYear() === now.getFullYear() &&
+                 lastDate.getMonth() < now.getMonth())
+            ) {
+                lastDate.setMonth(lastDate.getMonth() + 1);
+
+                const newEntry = {
+                    ...entry,
+                    datum: lastDate.toISOString().split("T")[0]
+                };
+
+                entries.push(newEntry);
+                changed = true;
+            }
+        }
+    });
+
+    if (changed) {
+        localStorage.setItem("boekhouding", JSON.stringify(entries));
+        updateSaldo();
+    }
+}
+
+// bij opstart uitvoeren:
+applyRecurring();
