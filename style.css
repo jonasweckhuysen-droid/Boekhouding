@@ -187,3 +187,43 @@ button:hover {
 i {
   margin-right: 5px;
 }
+/* Header */
+header {
+  text-align: center;
+  padding: 2rem 1rem;
+  background: linear-gradient(135deg, #4f46e5, #6366f1); /* mooie paarse gradient */
+  color: white;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  border-radius: 0 0 20px 20px;
+  margin-bottom: 2rem;
+}
+
+#title {
+  font-family: 'Arial Black', sans-serif;
+  font-size: 2.5rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#title i {
+  margin-right: 0.8rem;
+  color: #ffc107; /* goudkleurig icoon */
+  font-size: 2.8rem;
+  text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+}
+
+#saldoBox {
+  margin-top: 1rem;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#saldoBox i {
+  margin-right: 0.5rem;
+  color: #28a745; /* groen icoon voor saldo */
+}
