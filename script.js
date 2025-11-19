@@ -15,16 +15,20 @@ function goToIndex() {
 }
 
 function saveEntry() {
+  const soort = document.getElementById("soort").value; // inkomst of uitgave
   const datum = document.getElementById("datum").value;
-  const bedrag = parseFloat(document.getElementById("bedrag").value);
+  const bedragRaw = parseFloat(document.getElementById("bedrag").value);
   const type = document.getElementById("type").value;
 
-  if (!datum || !bedrag) {
+  if (!datum || !bedragRaw) {
     alert("Gelieve alle velden in te vullen");
     return;
   }
 
-  const entry = { datum, bedrag, type };
+  // Als het een uitgave is → bedrag negatief maken
+  const bedrag = soort === "uitgave" ? -Math.abs(bedragRaw) : Math.abs(bedragRaw);
+
+  const entry = { soort, datum, bedrag, type };
 
   let data = JSON.parse(localStorage.getItem("boekhouding")) || [];
   data.push(entry);
