@@ -107,3 +107,12 @@ th, td {
 th {
   background: #0d1b2a;
 }
+.inkomst {
+  color: #4ade80; /* groen */
+  font-weight: bold;
+}
+
+.uitgave {
+  color: #f87171; /* rood */
+  font-weight: bold;
+}
