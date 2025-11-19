@@ -1,60 +1,187 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Boekhouding App</title>
-  <link rel="manifest" href="/Boekhouding/manifest.json" />
-  <link rel="icon" href="/Boekhouding/icons/icon-192.png" />
-  <link rel="stylesheet" href="/Boekhouding/style.css">
-</head>
-<body>
-  <div class="container">
-    <h1>Boekhouding App</h1>
-    <div class="buttons">
-      <button id="btnInkomsten">Inkomsten</button>
-      <button id="btnUitgaven">Uitgaven</button>
-    </div>
 
-    <ul id="boekhoudingList"></ul>
-  </div>
+  <link rel="manifest" href="./manifest.json" />
+  <meta name="theme-color" content="#1f2937" />
+  <link rel="icon" href="./icons/icon-192.png" />
 
-  <!-- Modal voor invoer -->
-  <div id="invoerModal" class="modal">
-    <div class="modal-content">
-      <span class="close">&times;</span>
-      <h2>Nieuwe Invoer</h2>
-      <form id="invoerForm">
-        <label>Datum</label>
-        <input type="date" id="datum" required>
-        <label>Bedrag (€)</label>
-        <input type="number" step="0.01" id="bedrag" required>
-        <label>Type</label>
-        <select id="type">
-          <option>Lening</option>
-          <option>Verzekering</option>
-          <option>Sparen</option>
-          <option>Sparen Loreana</option>
-          <option>Winkel</option>
-          <option>Dokter</option>
-          <option>Data</option>
-          <option>Boodschappen</option>
-          <option>Benzine</option>
-          <option>Entertainment</option>
-          <option>Overig</option>
-        </select>
-        <button type="submit">Opslaan</button>
-      </form>
-    </div>
-  </div>
-
-  <script src="/Boekhouding/app.js"></script>
-  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/Boekhouding/sw.js')
-        .then(() => console.log('Service Worker geregistreerd!'))
-        .catch(console.error);
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background: #f3f4f6;
+      padding: 20px;
     }
-  </script>
+
+    .card {
+      background: white;
+      border-radius: 15px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      padding: 20px;
+      max-width: 420px;
+      margin: auto;
+      text-align: center;
+    }
+
+    h1 {
+      margin-top: 0;
+      font-size: 26px;
+      color: #1f2937;
+    }
+
+    button {
+      background: #2563eb;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 10px;
+      width: 100%;
+    }
+
+    button:hover {
+      background: #1d4ed8;
+    }
+
+    .list {
+      margin-top: 20px;
+      text-align: left;
+    }
+
+    .item {
+      background: #edf2f7;
+      padding: 10px;
+      margin-bottom: 8px;
+      border-radius: 8px;
+      font-size: 15px;
+    }
+
+    /* Popup styling */
+    .popup-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .popup {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 350px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+    }
+
+    .popup input, .popup select {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 15px;
+    }
+
+    .popup button {
+      margin-top: 15px;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="card">
+  <h1>Boekhouding</h1>
+  <button onclick="openPopup()">+ Nieuwe transactie</button>
+
+  <div id="list" class="list"></div>
+</div>
+
+<!-- Popup -->
+<div id="popup-bg" class="popup-bg">
+  <div class="popup">
+    <h2>Nieuwe transactie</h2>
+
+    <input id="date" type="date" />
+    <input id="amount" type="number" placeholder="Bedrag (€)" />
+
+    <select id="type">
+      <option value="Lening">Lening</option>
+      <option value="Verzekering">Verzekering</option>
+      <option value="Sparen">Sparen</option>
+      <option value="Sparen Loreana">Sparen Loreana</option>
+      <option value="Winkel">Winkel</option>
+      <option value="Dokter">Dokter</option>
+      <option value="Data">Data</option>
+      <option value="Abonnement">Abonnement</option>
+      <option value="Onderhoud">Onderhoud</option>
+      <option value="Extra">Extra</option>
+    </select>
+
+    <button onclick="saveTransaction()">Opslaan</button>
+    <button style="background:#6b7280" onclick="closePopup()">Annuleren</button>
+  </div>
+</div>
+
+<script>
+  // PWA Service Worker
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("./sw.js");
+  }
+
+  let transactions = JSON.parse(localStorage.getItem("transactions") || "[]");
+
+  function renderList() {
+    const list = document.getElementById("list");
+    list.innerHTML = "";
+
+    transactions.forEach(t => {
+      const div = document.createElement("div");
+      div.className = "item";
+      div.innerHTML = `<strong>${t.date}</strong> – €${t.amount} (${t.type})`;
+      list.appendChild(div);
+    });
+  }
+
+  function openPopup() {
+    document.getElementById("popup-bg").style.display = "flex";
+  }
+
+  function closePopup() {
+    document.getElementById("popup-bg").style.display = "none";
+  }
+
+  function saveTransaction() {
+    const date = document.getElementById("date").value;
+    const amount = document.getElementById("amount").value;
+    const type = document.getElementById("type").value;
+
+    if (!date || !amount) {
+      alert("Gelieve alle velden in te vullen.");
+      return;
+    }
+
+    transactions.push({ date, amount, type });
+
+    localStorage.setItem("transactions", JSON.stringify(transactions));
+
+    renderList();
+    closePopup();
+  }
+
+  renderList();
+</script>
+
 </body>
 </html>
