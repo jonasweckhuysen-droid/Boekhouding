@@ -1,91 +1,91 @@
-let transacties = JSON.parse(localStorage.getItem("boekhouding")) || [];
+let entries = JSON.parse(localStorage.getItem("boekhouding") || "[]");
 
-function saveLocal() {
-  localStorage.setItem("boekhouding", JSON.stringify(transacties));
-}
+const saldoSpan = document.getElementById("saldo");
+const content = document.getElementById("content");
+
+const popup = document.getElementById("popupOverlay");
+const btnInvoer = document.getElementById("btnInvoer");
+const btnOverzicht = document.getElementById("btnOverzicht");
 
 function updateSaldo() {
-  let saldo = 0;
-  transacties.forEach(t => {
-    saldo += t.type === "Inkomst" ? Number(t.amount) : -Number(t.amount);
-  });
-  document.getElementById("saldoDisplay").innerText =
-    "Saldo: €" + saldo.toFixed(2);
-}
-
-function renderTransacties() {
-  const list = document.getElementById("transacties");
-  list.innerHTML = "";
-
-  transacties.forEach(t => {
-    let li = document.createElement("li");
-    li.innerHTML = `
-      <span class="type">${t.type}</span> - €${t.amount}<br>
-      <small>${t.date}</small>
-    `;
-    list.appendChild(li);
-  });
-}
-
-function renderOverzicht() {
-  const tbody = document.querySelector("#overzichtTabel tbody");
-  tbody.innerHTML = "";
-
-  let stats = {};
-
-  transacties.forEach(t => {
-    let maand = t.date.slice(0, 7);
-    if (!stats[maand]) stats[maand] = {};
-    if (!stats[maand][t.type]) stats[maand][t.type] = 0;
-
-    stats[maand][t.type] += Number(t.amount);
-  });
-
-  Object.keys(stats).forEach(maand => {
-    Object.keys(stats[maand]).forEach(type => {
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${maand}</td>
-        <td>${type}</td>
-        <td>€${stats[maand][type].toFixed(2)}</td>
-      `;
-      tbody.appendChild(tr);
+    let total = 0;
+    entries.forEach(e => {
+        if (e.type === "Inkomst") total += e.amount;
+        else total -= e.amount;
     });
-  });
+    saldoSpan.textContent = "€" + total.toFixed(2);
 }
 
-function openPrompt() {
-  document.getElementById("popupBg").classList.remove("hidden");
+function saveEntries() {
+    localStorage.setItem("boekhouding", JSON.stringify(entries));
+    updateSaldo();
 }
 
-function closePopup() {
-  document.getElementById("popupBg").classList.add("hidden");
+function showPopup() {
+    popup.classList.remove("hidden");
 }
 
-function saveTransaction() {
-  const date = document.getElementById("dateInput").value;
-  const amount = document.getElementById("amountInput").value;
-  const type = document.getElementById("typeInput").value;
-
-  if (!date || !amount) {
-    alert("Gelieve alle velden in te vullen.");
-    return;
-  }
-
-  transacties.push({ date, amount, type });
-  saveLocal();
-  updateSaldo();
-  renderTransacties();
-  renderOverzicht();
-  closePopup();
+function hidePopup() {
+    popup.classList.add("hidden");
 }
 
-function showPage(id) {
-  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
-  document.getElementById(id).classList.add("active");
+btnInvoer.onclick = () => showPopup();
+document.getElementById("cancelEntry").onclick = () => hidePopup();
+
+document.getElementById("saveEntry").onclick = () => {
+    const date = document.getElementById("inputDate").value;
+    const amount = parseFloat(document.getElementById("inputAmount").value);
+    const type = document.getElementById("inputType").value;
+
+    if (!date || !amount) {
+        alert("Gelieve alle velden in te vullen.");
+        return;
+    }
+
+    entries.push({ date, amount, type });
+    saveEntries();
+    hidePopup();
+    loadHome();
+};
+
+function loadHome() {
+    content.innerHTML = `
+        <h2>Welkom</h2>
+        <p>Gebruik de knoppen hierboven om een nieuwe invoer toe te voegen of het overzicht te bekijken.</p>
+    `;
 }
 
-// Init
+function loadOverzicht() {
+    let overzicht = {};
+
+    entries.forEach(e => {
+        const month = e.date.substring(0, 7); 
+        if (!overzicht[month]) overzicht[month] = {};
+        if (!overzicht[month][e.type]) overzicht[month][e.type] = 0;
+
+        overzicht[month][e.type] += e.type === "Inkomst" ? e.amount : -e.amount;
+    });
+
+    let html = `<h2>Maandelijks overzicht</h2>`;
+
+    Object.keys(overzicht).forEach(month => {
+        html += `<h3>${month}</h3>`;
+        html += `<table>
+                    <tr><th>Type</th><th>Bedrag</th></tr>`;
+        Object.keys(overzicht[month]).forEach(type => {
+            html += `<tr>
+                        <td>${type}</td>
+                        <td>€${overzicht[month][type].toFixed(2)}</td>
+                     </tr>`;
+        });
+        html += `</table>`;
+    });
+
+    content.innerHTML = html;
+}
+
+btnOverzicht.onclick = loadOverzicht;
+
+// Initial load
+loadHome();
 updateSaldo();
-renderTransacties();
-renderOverzicht();
