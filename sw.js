@@ -1,7 +1,7 @@
-self.addEventListener('install', function(event) {
-  console.log('Service Worker installing.');
+self.addEventListener('install', event => {
+  console.log('Service Worker installeren.');
 });
 
-self.addEventListener('fetch', function(event) {
-  // kan caching toevoegen als je wil
+self.addEventListener('fetch', event => {
+  // Optioneel: cache strategie voor offline gebruik
 });
