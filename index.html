@@ -1,90 +1,75 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Boekhouding App</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <link rel="stylesheet" href="style.css" />
-  <link rel="manifest" href="manifest.json" />
+    <title>Boekhouding App</title>
 
-  <link rel="icon" type="image/png" href="icons/icon-192.png" />
-  <meta name="theme-color" content="#0d6efd" />
+    <!-- Styling -->
+    <link rel="stylesheet" href="style.css" />
+
+    <!-- PWA -->
+    <link rel="manifest" href="manifest.json" />
+    <script>
+        if ("serviceWorker" in navigator) {
+            navigator.serviceWorker.register("sw.js");
+        }
+    </script>
 </head>
+
 <body>
-  <header>
-    <h1>💰 Boekhouding</h1>
-    <div id="saldoDisplay">Saldo: €0.00</div>
-  </header>
+    <header>
+        <h1>Boekhouding</h1>
+        <div id="saldoBox">
+            Huidig saldo: <span id="saldo">€0.00</span>
+        </div>
+    </header>
 
-  <nav>
-    <button onclick="showPage('home')">🏠 Home</button>
-    <button onclick="showPage('overzicht')">📊 Overzicht</button>
-    <button onclick="openPrompt()">➕ Toevoegen</button>
-  </nav>
+    <main>
+        <div class="button-container">
+            <button id="btnInvoer">Nieuwe invoer</button>
+            <button id="btnOverzicht">Overzicht</button>
+        </div>
 
-  <!-- HOME PAGE -->
-  <section id="home" class="page active">
-    <h2>Transacties</h2>
-    <ul id="transacties"></ul>
-  </section>
+        <div id="content"></div>
+    </main>
 
-  <!-- OVERZICHT PAGINA -->
-  <section id="overzicht" class="page">
-    <h2>Maandoverzicht</h2>
-    <table id="overzichtTabel">
-      <thead>
-        <tr>
-          <th>Maand</th>
-          <th>Type</th>
-          <th>Totaal</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </section>
+    <!-- Popup overlay -->
+    <div id="popupOverlay" class="hidden">
+        <div id="popup">
+            <h2>Nieuwe invoer</h2>
 
-  <!-- POPUP FORM -->
-  <div id="popupBg" class="hidden">
-    <div id="popup">
-      <h3>Nieuwe Invoer</h3>
+            <label>Datum</label>
+            <input type="date" id="inputDate" />
 
-      <label>Datum</label>
-      <input type="date" id="dateInput" />
+            <label>Bedrag (€)</label>
+            <input type="number" id="inputAmount" />
 
-      <label>Bedrag (€)</label>
-      <input type="number" id="amountInput" step="0.01" />
+            <label>Type</label>
+            <select id="inputType">
+                <option value="Lening">Lening</option>
+                <option value="Verzekering">Verzekering</option>
+                <option value="Sparen">Sparen</option>
+                <option value="Sparen Loreana">Sparen Loreana</option>
+                <option value="Winkel">Winkel</option>
+                <option value="Dokter">Dokter</option>
+                <option value="Data">Data</option>
+                <option value="Energie">Energie</option>
+                <option value="Huur/Hypotheek">Huur / Hypotheek</option>
+                <option value="Abonnementen">Abonnementen</option>
+                <option value="Restaurants">Restaurants</option>
+                <option value="Vrije tijd">Vrije tijd</option>
+                <option value="Inkomst">Inkomst</option>
+            </select>
 
-      <label>Type</label>
-      <select id="typeInput">
-        <option value="Inkomst">Inkomst</option>
-        <option value="Uitgave">Uitgave</option>
-        <option disabled>────</option>
-        <option value="Lening">Lening</option>
-        <option value="Verzekering">Verzekering</option>
-        <option value="Sparen">Sparen</option>
-        <option value="Sparen Loreana">Sparen Loreana</option>
-        <option value="Winkel">Winkel</option>
-        <option value="Dokter">Dokter</option>
-        <option value="Data">Data</option>
-        <option value="Auto">Auto</option>
-        <option value="Brandstof">Brandstof</option>
-        <option value="Horeca">Horeca</option>
-      </select>
-
-      <div class="popup-buttons">
-        <button onclick="saveTransaction()">Opslaan</button>
-        <button class="cancel" onclick="closePopup()">Annuleren</button>
-      </div>
+            <div class="popup-buttons">
+                <button id="saveEntry">Bewaren</button>
+                <button id="cancelEntry" class="cancel">Annuleren</button>
+            </div>
+        </div>
     </div>
-  </div>
 
-  <script src="script.js"></script>
-
-  <script>
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("sw.js");
-    }
-  </script>
+    <script src="script.js"></script>
 </body>
 </html>
