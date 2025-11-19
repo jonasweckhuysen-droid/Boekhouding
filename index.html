@@ -1,75 +1,60 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-    <title>Boekhouding App</title>
-
-    <!-- Styling -->
-    <link rel="stylesheet" href="style.css" />
-
-    <!-- PWA -->
-    <link rel="manifest" href="manifest.json" />
-    <script>
-        if ("serviceWorker" in navigator) {
-            navigator.serviceWorker.register("sw.js");
-        }
-    </script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Boekhouding App</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="manifest" href="manifest.json" />
 </head>
 
 <body>
-    <header>
-        <h1>Boekhouding</h1>
-        <div id="saldoBox">
-            Huidig saldo: <span id="saldo">€0.00</span>
-        </div>
-    </header>
 
-    <main>
-        <div class="button-container">
-            <button id="btnInvoer">Nieuwe invoer</button>
-            <button id="btnOverzicht">Overzicht</button>
-        </div>
-
-        <div id="content"></div>
-    </main>
-
-    <!-- Popup overlay -->
-    <div id="popupOverlay" class="hidden">
-        <div id="popup">
-            <h2>Nieuwe invoer</h2>
-
-            <label>Datum</label>
-            <input type="date" id="inputDate" />
-
-            <label>Bedrag (€)</label>
-            <input type="number" id="inputAmount" />
-
-            <label>Type</label>
-            <select id="inputType">
-                <option value="Lening">Lening</option>
-                <option value="Verzekering">Verzekering</option>
-                <option value="Sparen">Sparen</option>
-                <option value="Sparen Loreana">Sparen Loreana</option>
-                <option value="Winkel">Winkel</option>
-                <option value="Dokter">Dokter</option>
-                <option value="Data">Data</option>
-                <option value="Energie">Energie</option>
-                <option value="Huur/Hypotheek">Huur / Hypotheek</option>
-                <option value="Abonnementen">Abonnementen</option>
-                <option value="Restaurants">Restaurants</option>
-                <option value="Vrije tijd">Vrije tijd</option>
-                <option value="Inkomst">Inkomst</option>
-            </select>
-
-            <div class="popup-buttons">
-                <button id="saveEntry">Bewaren</button>
-                <button id="cancelEntry" class="cancel">Annuleren</button>
-            </div>
-        </div>
+  <header>
+    <h1>Boekhouding</h1>
+    <div id="saldoBox">
+      Huidig Saldo: <span id="saldo">€ 0.00</span>
     </div>
+  </header>
 
-    <script src="script.js"></script>
+  <main>
+    <button class="btn primary" onclick="openModal()">Nieuwe invoer</button>
+    <button class="btn secondary" onclick="goToOverzicht()">Overzicht</button>
+  </main>
+
+  <!-- Modal invoer -->
+  <div id="modal" class="modalHidden">
+    <div class="modalContent">
+      <h2>Nieuwe Invoer</h2>
+
+      <label>Datum:</label>
+      <input type="date" id="datum" />
+
+      <label>Bedrag:</label>
+      <input type="number" id="bedrag" placeholder="Bijv. 25.50" />
+
+      <label>Type:</label>
+      <select id="type">
+        <option value="Lening">Lening</option>
+        <option value="Verzekering">Verzekering</option>
+        <option value="Sparen">Sparen</option>
+        <option value="Sparen Loreana">Sparen Loreana</option>
+        <option value="Winkel">Winkel</option>
+        <option value="Dokter">Dokter</option>
+        <option value="Data">Data</option>
+        <option value="Restaurant">Restaurant</option>
+        <option value="Auto">Auto</option>
+        <option value="Abonnementen">Abonnementen</option>
+        <option value="Diverse">Diverse</option>
+      </select>
+
+      <div class="modalBtns">
+        <button class="btn cancel" onclick="closeModal()">Annuleren</button>
+        <button class="btn primary" onclick="saveEntry()">Opslaan</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
 </body>
 </html>
