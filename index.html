@@ -12,8 +12,10 @@
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
     <script>
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("/public/sw.js");
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').then(function() {
+      console.log('Service Worker registered!');
+    });
   }
     </script>
   </body>
