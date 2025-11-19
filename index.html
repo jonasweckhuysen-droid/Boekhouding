@@ -25,33 +25,44 @@
   <!-- Modal invoer -->
   <div id="modal" class="modalHidden">
     <div class="modalContent">
-      <h2>Nieuwe Invoer</h2>
+  <h2>Nieuwe Invoer</h2>
 
-      <label>Datum:</label>
-      <input type="date" id="datum" />
+  <label>Soort:</label>
+  <select id="soort">
+    <option value="inkomst">Inkomst</option>
+    <option value="uitgave">Uitgave</option>
+  </select>
 
-      <label>Bedrag:</label>
-      <input type="number" id="bedrag" placeholder="Bijv. 25.50" />
+  <label>Datum:</label>
+  <input type="date" id="datum" />
 
-      <label>Type:</label>
-      <select id="type">
-        <option value="Lening">Lening</option>
-        <option value="Verzekering">Verzekering</option>
-        <option value="Sparen">Sparen</option>
-        <option value="Sparen Loreana">Sparen Loreana</option>
-        <option value="Winkel">Winkel</option>
-        <option value="Dokter">Dokter</option>
-        <option value="Data">Data</option>
-        <option value="Restaurant">Restaurant</option>
-        <option value="Auto">Auto</option>
-        <option value="Abonnementen">Abonnementen</option>
-        <option value="Diverse">Diverse</option>
-      </select>
+  <label>Bedrag:</label>
+  <input type="number" id="bedrag" placeholder="Bijv. 1200.00" />
 
-      <div class="modalBtns">
-        <button class="btn cancel" onclick="closeModal()">Annuleren</button>
-        <button class="btn primary" onclick="saveEntry()">Opslaan</button>
-      </div>
+  <label>Type:</label>
+  <select id="type">
+    <option value="Loon">Loon</option>
+    <option value="Premie">Premie</option>
+    <option value="Extra vergoeding">Extra vergoeding</option>
+    <option value="Terugbetaling">Terugbetaling</option>
+
+    <option value="Lening">Lening</option>
+    <option value="Verzekering">Verzekering</option>
+    <option value="Sparen">Sparen</option>
+    <option value="Sparen Loreana">Sparen Loreana</option>
+    <option value="Winkel">Winkel</option>
+    <option value="Dokter">Dokter</option>
+    <option value="Data">Data</option>
+    <option value="Restaurant">Restaurant</option>
+    <option value="Auto">Auto</option>
+    <option value="Abonnementen">Abonnementen</option>
+    <option value="Diverse">Diverse</option>
+  </select>
+
+  <div class="modalBtns">
+    <button class="btn cancel" onclick="closeModal()">Annuleren</button>
+    <button class="btn primary" onclick="saveEntry()">Opslaan</button>
+  </div>
     </div>
   </div>
 
