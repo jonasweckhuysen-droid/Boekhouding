@@ -19,6 +19,7 @@ function saveEntry() {
   const datum = document.getElementById("datum").value;
   const bedragRaw = parseFloat(document.getElementById("bedrag").value);
   const type = document.getElementById("type").value;
+  const recurring = document.getElementById("recurring").checked;
 
   if (!datum || !bedragRaw) {
     alert("Gelieve alle velden in te vullen");
