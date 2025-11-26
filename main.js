@@ -1,57 +1,62 @@
-const root = document.getElementById("root");
+let db;
 
-// Haal boekingen op uit localStorage of start leeg
-let boekingen = JSON.parse(localStorage.getItem("boekingen")) || [];
+const request = indexedDB.open("BoekhoudingDB", 1);
 
-// Render functie
+request.onupgradeneeded = function (event) {
+  db = event.target.result;
+  if (!db.objectStoreNames.contains("boekhouding")) {
+    db.createObjectStore("boekhouding", { keyPath: "id", autoIncrement: true });
+  }
+};
+
+request.onsuccess = function (event) {
+  db = event.target.result;
+  loadBookings();
+};
+
+// Data ophalen
+function loadBookings() {
+  if (!db) return;
+
+  const transaction = db.transaction(["boekhouding"], "readonly");
+  const store = transaction.objectStore("boekhouding");
+
+  const req = store.getAll();
+  req.onsuccess = function () {
+    render(req.result);
+  };
+}
+
+// Renderen
 function render(list) {
-  let html = '';
+  const root = document.getElementById("root");
+  let html = "";
+
+  let inkomsten = 0;
+  let uitgaven = 0;
+
   list.forEach(b => {
+    if (b.bedrag > 0) inkomsten += b.bedrag;
+    if (b.bedrag < 0) uitgaven += Math.abs(b.bedrag);
+
     html += `
       <div class="booking-card">
         <span>${b.datum}</span>
-        <span class="booking-type ${b.category}">${b.type}</span>
-        <span>€${b.bedrag}</span>
+        <span>${b.type}</span>
+        <span>€ ${b.bedrag.toFixed(2)}</span>
       </div>
     `;
   });
 
-  const totaalInkomsten = list.filter(b => b.category === "inkomsten").reduce((sum, b) => sum + b.bedrag, 0);
-  const totaalUitgaven = list.filter(b => b.category === "uitgaven").reduce((sum, b) => sum + b.bedrag, 0);
-  const saldo = totaalInkomsten - totaalUitgaven;
+  const saldo = inkomsten - uitgaven;
 
-  html += `<div class="totals">
-    Inkomsten: €${totaalInkomsten} | Uitgaven: €${totaalUitgaven} | Saldo: €${saldo}
-  </div>`;
+  html += `
+    <div class="totals">
+      Inkomsten: € ${inkomsten.toFixed(2)} <br>
+      Uitgaven: € ${uitgaven.toFixed(2)} <br>
+      Saldo: € ${saldo.toFixed(2)}
+    </div>
+  `;
 
   root.innerHTML = html;
 }
-
-// Voeg nieuwe boeking toe
-function addBooking() {
-  const datum = document.getElementById("datum").value;
-  const bedrag = parseFloat(document.getElementById("bedrag").value);
-  const type = document.getElementById("type").value;
-
-  if (!datum || !bedrag || !type) {
-    alert("Vul alle velden in!");
-    return;
-  }
-
-  const category = ["Lening", "Sparen", "Sparen Loreana"].includes(type) ? "inkomsten" : "uitgaven";
-
-  boekingen.push({ datum, type, bedrag, category });
-
-  // Sla lokaal op
-  localStorage.setItem("boekingen", JSON.stringify(boekingen));
-
-  // Wis form
-  document.getElementById("datum").value = "";
-  document.getElementById("bedrag").value = "";
-  document.getElementById("type").value = "Lening";
-
-  render(boekingen);
-}
-
-// Init
-render(boekingen);
