@@ -1,20 +1,31 @@
 let db;
 
+// =====================
+// DATABASE
+// =====================
 const request = indexedDB.open("BoekhoudingDB", 1);
 
 request.onupgradeneeded = function (event) {
   db = event.target.result;
-  const store = db.createObjectStore("boekhouding", { keyPath: "id", autoIncrement: true });
+
+  if (!db.objectStoreNames.contains("boekhouding")) {
+    db.createObjectStore("boekhouding", { keyPath: "id", autoIncrement: true });
+  }
 };
 
 request.onsuccess = function (event) {
   db = event.target.result;
+  applyRecurring();  
   loadData();
 };
 
 request.onerror = function () {
   console.error("IndexedDB kon niet geopend worden");
 };
+
+// =====================
+// MODAL
+// =====================
 function openModal() {
   document.getElementById("modal").classList.remove("modalHidden");
 }
@@ -23,6 +34,9 @@ function closeModal() {
   document.getElementById("modal").classList.add("modalHidden");
 }
 
+// =====================
+// NAVIGATIE
+// =====================
 function goToOverzicht() {
   window.location.href = "overzicht.html";
 }
@@ -31,19 +45,26 @@ function goToIndex() {
   window.location.href = "index.html";
 }
 
+// =====================
+// OPSLAAN
+// =====================
 function saveEntry() {
-  const soort = document.getElementById("soort").value; // inkomst of uitgave
+  if (!db) {
+    alert("Database wordt nog geladen...");
+    return;
+  }
+
+  const soort = document.getElementById("soort").value;
   const datum = document.getElementById("datum").value;
   const bedragRaw = parseFloat(document.getElementById("bedrag").value);
   const type = document.getElementById("type").value;
   const recurring = document.getElementById("recurring").checked;
 
-  if (!datum || !bedragRaw) {
+  if (!datum || isNaN(bedragRaw)) {
     alert("Gelieve alle velden in te vullen");
     return;
   }
 
-  // Als het een uitgave is → bedrag negatief maken
   const bedrag = soort === "uitgave" ? -Math.abs(bedragRaw) : Math.abs(bedragRaw);
 
   const entry = {
@@ -52,76 +73,83 @@ function saveEntry() {
     bedrag,
     type,
     recurring
-};
-  
-  let data = JSON.parse(localStorage.getItem("boekhouding")) || [];
-  data.push(entry);
-  localStorage.setItem("boekhouding", JSON.stringify(data));
+  };
 
-  closeModal();
-  updateSaldo();
+  const transaction = db.transaction(["boekhouding"], "readwrite");
+  const store = transaction.objectStore("boekhouding");
+  store.add(entry);
+
+  transaction.oncomplete = function () {
+    closeModal();
+    loadData();
+  };
 }
 
-function updateSaldo() {
-  let data = JSON.parse(localStorage.getItem("boekhouding")) || [];
-  let total = data.reduce((sum, e) => sum + e.bedrag, 0);
-  document.getElementById("saldo").innerText = "€ " + total.toFixed(2);
+// =====================
+// SALDO
+// =====================
+function loadData() {
+  if (!db) return;
+
+  const transaction = db.transaction(["boekhouding"], "readonly");
+  const store = transaction.objectStore("boekhouding");
+  const request = store.getAll();
+
+  request.onsuccess = function () {
+    const data = request.result;
+    updateSaldo(data);
+  };
 }
 
-function loadOverzicht() {
-  let data = JSON.parse(localStorage.getItem("boekhouding")) || [];
+function updateSaldo(data) {
+  let total = 0;
 
-  const tbody = document.querySelector("#overzichtTabel tbody");
-  tbody.innerHTML = "";
-
-  data.forEach(entry => {
-    const row = document.createElement("tr");
-
-    const cssClass = entry.bedrag >= 0 ? "inkomst" : "uitgave";
-
-    row.innerHTML = `
-      <td>${entry.datum}</td>
-      <td>${entry.type}</td>
-      <td class="${cssClass}">€ ${entry.bedrag.toFixed(2)}</td>
-    `;
-    tbody.appendChild(row);
+  data.forEach(e => {
+    total += e.bedrag;
   });
+
+  document.getElementById("saldo").innerText =
+    "€ " + total.toFixed(2).replace(".", ",");
 }
 
-updateSaldo();
+// =====================
+// TERUGKERENDE KOSTEN
+// =====================
 function applyRecurring() {
-    const entries = JSON.parse(localStorage.getItem("boekhouding") || "[]");
-    let changed = false;
+  if (!db) return;
+
+  const transaction = db.transaction(["boekhouding"], "readwrite");
+  const store = transaction.objectStore("boekhouding");
+
+  const request = store.getAll();
+
+  request.onsuccess = function () {
+    const entries = request.result;
+    const now = new Date();
+    let newOnes = [];
 
     entries.forEach(entry => {
-        if (entry.recurring) {
-            const lastDate = new Date(entry.datum);
-            const now = new Date();
+      if (entry.recurring) {
+        let lastDate = new Date(entry.datum);
 
-            // Check of we minstens 1 maand verder zijn
-            while (
-                lastDate.getFullYear() < now.getFullYear() ||
-                (lastDate.getFullYear() === now.getFullYear() &&
-                 lastDate.getMonth() < now.getMonth())
-            ) {
-                lastDate.setMonth(lastDate.getMonth() + 1);
+        while (
+          lastDate.getFullYear() < now.getFullYear() ||
+          (lastDate.getFullYear() === now.getFullYear() &&
+            lastDate.getMonth() < now.getMonth())
+        ) {
+          lastDate.setMonth(lastDate.getMonth() + 1);
 
-                const newEntry = {
-                    ...entry,
-                    datum: lastDate.toISOString().split("T")[0]
-                };
-
-                entries.push(newEntry);
-                changed = true;
-            }
+          newOnes.push({
+            soort: entry.soort,
+            datum: lastDate.toISOString().split("T")[0],
+            bedrag: entry.bedrag,
+            type: entry.type,
+            recurring: true
+          });
         }
+      }
     });
 
-    if (changed) {
-        localStorage.setItem("boekhouding", JSON.stringify(entries));
-        updateSaldo();
-    }
+    newOnes.forEach(n => store.add(n));
+  };
 }
-
-// bij opstart uitvoeren:
-applyRecurring();
