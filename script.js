@@ -1,3 +1,20 @@
+let db;
+
+const request = indexedDB.open("BoekhoudingDB", 1);
+
+request.onupgradeneeded = function (event) {
+  db = event.target.result;
+  const store = db.createObjectStore("boekhouding", { keyPath: "id", autoIncrement: true });
+};
+
+request.onsuccess = function (event) {
+  db = event.target.result;
+  loadData();
+};
+
+request.onerror = function () {
+  console.error("IndexedDB kon niet geopend worden");
+};
 function openModal() {
   document.getElementById("modal").classList.remove("modalHidden");
 }
