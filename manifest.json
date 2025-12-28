@@ -1,7 +1,7 @@
 
 {
   "name": "Boekhouding App",
-  "short_name": "Boekhouding",
+  "short_name": "BizzieBoek",
   "start_url": "/Boekhouding/index.html",
   "scope": "/Boekhouding/",
   "display": "standalone",
