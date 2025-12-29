@@ -3,7 +3,14 @@ import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from
 import { getFirestore, collection, addDoc, getDocs, query } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // Firebase
-const firebaseConfig = { /* …jouw config… */ };
+const firebaseConfig = {
+  apiKey: "AIzaSyAkBAw17gNU_EBhn8dKgyY5qv-ecfWaG2s",
+  authDomain: "finance-jonas.firebaseapp.com",
+  projectId: "finance-jonas",
+  storageBucket: "finance-jonas.firebasestorage.app",
+  messagingSenderId: "497182804753",
+  appId: "1:497182804753:web:ea942a578dd1c15f631ab0",
+  measurementId: "G-0J29T1Z7MV"} ;
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
