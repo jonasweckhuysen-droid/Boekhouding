@@ -1,1 +1,245 @@
-<!DOCTYPE html> <html lang="nl"> <head> <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0"> <title>Meneige Boekhouding</title> <!-- Font Awesome & Google Fonts --> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"> <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet"> <meta http-equiv="Content-Security-Policy" content=" default-src 'self'; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://cdnjs.cloudflare.com; connect-src 'self' https://*.firebaseio.com https://*.googleapis.com; "> <style> body{ margin:0; font-family:'Poppins',sans-serif; background:linear-gradient(135deg,#dbeafe,#f0f9ff); min-height:100vh; transition:.4s; display:flex; justify-content:center; } body.dark{background:linear-gradient(135deg,#020617,#020617);color:white;} .container{ width:100%; max-width:400px; padding:20px; display:flex; flex-direction:column; gap:20px; box-sizing:border-box; } header{text-align:center;} #saldoCard, #fixedCostsCard, .actions{ background:white; border-radius:20px; padding:16px; box-shadow:0 8px 20px rgba(0,0,0,.1); } body.dark #saldoCard, body.dark #fixedCostsCard{background:#020617} #saldoCard{ display:flex; flex-direction:column; align-items:center; gap:8px; } #saldo{font-size:32px;font-weight:600;} #saldoCard i{font-size:28px;color:#60a5fa;} #saldoBarContainer{ width:100%;background:#e0e0e0;height:12px;border-radius:8px;margin-top:8px;overflow:hidden; } #saldoBar{ width:0%;height:100%;background:#60a5fa;transition:width .3s; } #fixedCostsCard p{font-weight:600;margin-bottom:6px;} #fixedCostsCard div span{display:block;margin:4px 0;} .actions{ display:flex; justify-content:space-between; gap:10px; } .btn{ flex:1; padding:12px 10px; border-radius:14px; border:none; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; transition:.2s; } .btn:hover{opacity:.85;} .add{background:#60a5fa;color:white;} .cal{background:#fbbf24;color:white;} .btn-view{background:#10b981;color:white;} .btn.save{background:#3b82f6;color:white;} .btn.cancel{background:#ef4444;color:white;} #calendar{ display:grid; grid-template-columns:repeat(7,1fr); gap:6px; } .day{ background:white; padding:10px; border-radius:12px; text-align:center; cursor:pointer; box-shadow:0 4px 10px rgba(0,0,0,.08); transition:.2s; } .day:hover{transform:translateY(-2px);} body.dark .day{background:#020617} .day.has{border:2px solid #60a5fa} #modal,#dayModal,#fixedCostsModal{ position:fixed;inset:0;background:rgba(0,0,0,.5); display:none;align-items:center;justify-content:center; } .box{ background:white;width:90%;max-width:360px;padding:20px;border-radius:20px; display:flex;flex-direction:column;gap:10px; } body.dark .box{background:#020617} input,select{width:100%;padding:10px;margin-top:8px;border-radius:10px;border:1px solid #cbd5f5;} .themeToggle{ position:fixed;top:15px;right:15px;font-size:24px;cursor:pointer; background:rgba(255,255,255,0.9);padding:8px;border-radius:50%; transition:.3s; } .themeToggle:hover{background:rgba(255,255,255,1);} body.dark .themeToggle{background:rgba(30,30,30,0.8);color:white;} .entry{display:flex;justify-content:space-between;padding:6px 0;} .pos{color:#22c55e;font-weight:500;} .neg{color:#ef4444;font-weight:500;} </style> </head> <body> <div class="themeToggle" id="themeToggle">🌙</div> <div class="container"> <header> <h1>Meneige Boekhouding <i class="fa-solid fa-piggy-bank"></i></h1> </header> <div id="saldoCard"> <i class="fa-solid fa-wallet"></i> <div id="saldo">€ 0,00</div> <div id="saldoBarContainer"> <div id="saldoBar"></div> </div> <div id="expectedEnd"></div> </div> <div id="fixedCostsCard"> <p>Vaste Kosten</p> <div id="fixedCostsList">Geen vaste kosten ingesteld</div> <br> <button class="btn btn-view" id="fixedCostsBtn">⚙️ Instellen</button> </div> <div class="actions"> <button class="btn add" id="addBtn"><i class="fa-solid fa-plus"></i> Toevoegen</button> <button class="btn cal" id="calBtn"><i class="fa-solid fa-calendar-days"></i> Kalender</button> </div> <div id="calendar"></div> <div style="max-width:400px;margin:20px auto;"> <h3>Uitgaven per categorie (maandelijks)</h3> <canvas id="expenseChart" width="400" height="200"></canvas> </div> </div> <!-- MODALS --> <div id="modal"> <div class="box"> <h3>Nieuwe beweging</h3> <select id="soort"> <option value="inkomst">💰 Inkomst</option> <option value="uitgave">💸 Uitgave</option> </select> <input id="bron" placeholder="Van / Naar"> <input type="date" id="datum"> <input type="number" id="bedrag" placeholder="Bedrag"> <label><input type="checkbox" id="recurring"> Maandelijks</label> <br> <div style="display:flex;gap:10px;justify-content:flex-end;"> <button class="btn add" id="saveEntryBtn"><i class="fa-solid fa-floppy-disk"></i> Opslaan</button> <button class="btn cancel" id="closeModalBtn"><i class="fa-solid fa-xmark"></i> Annuleren</button> </div> </div> </div> <div id="dayModal"> <div class="box"> <h3 id="dayTitle"></h3> <div id="dayList"></div> <button class="btn cancel" id="closeDayBtn"><i class="fa-solid fa-xmark"></i> Sluiten</button> </div> </div> <div id="fixedCostsModal"> <div class="box"> <h2>Vaste Kosten</h2> <input type="number" id="leningInput" placeholder="Lening"> <input type="number" id="electriciteitInput" placeholder="Electriciteit"> <input type="number" id="mobiliteitInput" placeholder="Mobiliteit"> <input type="number" id="verzekeringInput" placeholder="Verzekering"> <br><br> <button class="btn save" id="saveFixedBtn">Opslaan</button> <button class="btn cancel" id="closeFixedBtn">Annuleren</button> </div> </div> <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> <script type="module" src="script.js"></script> </body> </html>
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, collection, addDoc, getDocs, query } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+// ---------- Firebase ----------
+const firebaseConfig = {
+  apiKey: "AIzaSyAkBAw17gNU_EBhn8dKgyY5qv-ecfWaG2s",
+  authDomain: "finance-jonas.firebaseapp.com",
+  projectId: "finance-jonas",
+  storageBucket: "finance-jonas.firebasestorage.app",
+  messagingSenderId: "497182804753",
+  appId: "1:497182804753:web:ea942a578dd1c15f631ab0",
+  measurementId: "G-0J29T1Z7MV"
+};
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const provider = new GoogleAuthProvider();
+window.db = db;
+
+// ---------- Auth ----------
+const login = async () => {
+  try {
+    const result = await signInWithPopup(auth, provider);
+    window.user = result.user;
+    loadData();
+  } catch(e) { console.error(e); alert("Login mislukt!"); }
+};
+onAuthStateChanged(auth, user => {
+  if(!user) login();
+  else { window.user=user; loadData(); }
+});
+
+// ---------- UI ----------
+const modal = document.getElementById("modal");
+const dayModal = document.getElementById("dayModal");
+const fixedCostsModal = document.getElementById("fixedCostsModal");
+
+const soort = document.getElementById("soort");
+const bron = document.getElementById("bron");
+const datum = document.getElementById("datum");
+const bedrag = document.getElementById("bedrag");
+const recurring = document.getElementById("recurring");
+
+const saldoDiv = document.getElementById("saldo");
+const saldoBar = document.getElementById("saldoBar");
+const expectedEndDiv = document.getElementById("expectedEnd");
+const fixedCostsList = document.getElementById("fixedCostsList");
+const dayTitle = document.getElementById("dayTitle");
+const dayList = document.getElementById("dayList");
+
+const leningInput = document.getElementById("leningInput");
+const electriciteitInput = document.getElementById("electriciteitInput");
+const mobiliteitInput = document.getElementById("mobiliteitInput");
+const verzekeringInput = document.getElementById("verzekeringInput");
+
+// ---------- MODALS ----------
+function openModal(){ modal.style.display="flex"; }
+function closeModal(){ modal.style.display="none"; }
+function openDayModal(){ dayModal.style.display="flex"; }
+function closeDayModal(){ dayModal.style.display="none"; }
+function openFixedCosts(){
+  fixedCostsModal.style.display="flex";
+  const costs = JSON.parse(localStorage.getItem("fixedCosts"))||{};
+  leningInput.value = costs.lening||"";
+  electriciteitInput.value = costs.electriciteit||"";
+  mobiliteitInput.value = costs.mobiliteit||"";
+  verzekeringInput.value = costs.verzekering||"";
+}
+function closeFixedCosts(){ fixedCostsModal.style.display="none"; }
+
+// ---------- SAVE ENTRIES ----------
+async function saveEntry(){
+  const soortVal = soort.value;
+  const bronVal = bron.value;
+  const datumVal = datum.value;
+  const bedragVal = parseFloat(bedrag.value)*(soortVal==="uitgave"?-1:1);
+  const recurringVal = recurring.checked;
+  if(!datumVal||isNaN(bedragVal)){ alert("Vul alles in"); return; }
+  await addDoc(collection(db,"users",user.uid,"items"),{
+    soort:soortVal,
+    bron:bronVal,
+    datum:datumVal,
+    bedrag:bedragVal,
+    recurring:recurringVal,
+    created:Date.now()
+  });
+  closeModal();
+  loadData();
+}
+
+// ---------- FIXED COSTS ----------
+function saveFixedCosts(){
+  const costs = {
+    lening: parseFloat(leningInput.value)||0,
+    electriciteit: parseFloat(electriciteitInput.value)||0,
+    mobiliteit: parseFloat(mobiliteitInput.value)||0,
+    verzekering: parseFloat(verzekeringInput.value)||0
+  };
+  localStorage.setItem("fixedCosts", JSON.stringify(costs));
+  closeFixedCosts();
+  updateFixedCostsUI();
+  loadData();
+}
+
+function updateFixedCostsUI(){
+  const costs = JSON.parse(localStorage.getItem("fixedCosts"))||{};
+  const keys = Object.keys(costs).filter(k=>costs[k]>0);
+  if(keys.length===0) fixedCostsList.innerText="Geen vaste kosten ingesteld";
+  else fixedCostsList.innerHTML = keys.map(k=>`<span>${k.charAt(0).toUpperCase()+k.slice(1)}: € ${costs[k].toFixed(2)}</span>`).join("<br>");
+}
+
+// ---------- SALDO & BUDGET ----------
+function updateSaldoUI(saldo=0, spent=0){
+  // Vaste kosten
+  const costs = JSON.parse(localStorage.getItem("fixedCosts"))||{};
+  const totalFixed = Object.values(costs).reduce((a,b)=>a+b,0);
+  const expectedEnd = saldo - totalFixed;
+
+  // Saldo
+  saldoDiv.innerHTML = saldo>=0 ? `💰 € ${saldo.toFixed(2).replace(".",",")}` : `🔴 € ${saldo.toFixed(2).replace(".",",")}`;
+
+  // Verwacht einde maand
+  expectedEndDiv.innerHTML = `🔮 Verwacht einde maand: € ${expectedEnd.toFixed(2).replace(".",",")}`;
+
+  // Budget progress bar
+  const budget = parseFloat(localStorage.getItem("monthlyBudget"));
+  if(budget){
+    const percent = Math.min((spent/budget)*100, 100);
+    saldoBar.style.width = percent+"%";
+  } else saldoBar.style.width = "0%";
+}
+
+// ---------- LOAD DATA ----------
+async function loadData(){
+  const q = query(collection(db,"users",user.uid,"items"));
+  const snap = await getDocs(q);
+
+  let saldo=0, spent=0;
+  const now = new Date();
+  const m=now.getMonth(), y=now.getFullYear();
+  const items=[];
+
+  snap.forEach(doc=>{
+    const e=doc.data();
+    saldo += e.bedrag;
+    const d = new Date(e.datum);
+    items.push({...e, datumObj:d});
+    if(e.bedrag<0 && d.getMonth()===m && d.getFullYear()===y) spent += Math.abs(e.bedrag);
+  });
+
+  window.items = items;
+
+  updateFixedCostsUI();
+  updateSaldoUI(saldo, spent);
+  updateBudgetChart(items);
+}
+
+// ---------- KALENDER ----------
+function buildCalendar(){
+  const calendar = document.getElementById("calendar");
+  calendar.innerHTML="";
+  const now = new Date();
+  const year=now.getFullYear();
+  const month=now.getMonth();
+  const firstDay = new Date(year,month,1).getDay();
+  const daysInMonth = new Date(year,month+1,0).getDate();
+
+  for(let i=0;i<firstDay;i++) calendar.appendChild(document.createElement("div"));
+
+  for(let d=1;d<=daysInMonth;d++){
+    const dayDiv=document.createElement("div");
+    dayDiv.className="day";
+    dayDiv.innerText=d;
+
+    const dayItems = window.items.filter(item=>{
+      const itemDate=item.datumObj;
+      return itemDate.getDate()===d && itemDate.getMonth()===month && itemDate.getFullYear()===year;
+    });
+
+    if(dayItems.length>0) dayDiv.classList.add("has");
+
+    dayDiv.addEventListener("click", ()=>{
+      dayTitle.innerText=`${d}/${month+1}/${year}`;
+      dayList.innerHTML="";
+      if(dayItems.length===0) dayList.innerHTML="<p>Geen bewegingen</p>";
+      else dayItems.forEach(item=>{
+        const p=document.createElement("div");
+        p.className="entry "+(item.bedrag>=0?"pos":"neg");
+        const icon = item.bedrag>=0 ? "💵" : "💸";
+        p.innerText=`${icon} ${item.soort} - ${item.bron} : € ${item.bedrag.toFixed(2).replace(".",",")}`;
+        dayList.appendChild(p);
+      });
+      openDayModal();
+    });
+
+    calendar.appendChild(dayDiv);
+  }
+}
+
+// ---------- BUDGET CHART ----------
+let expenseChart = null;
+function updateBudgetChart(items){
+  const now = new Date();
+  const m=now.getMonth(), y=now.getFullYear();
+  const categories = {};
+  items.forEach(i=>{
+    const d = i.datumObj;
+    if(d.getMonth()===m && d.getFullYear()===y && i.bedrag<0){
+      if(!categories[i.bron]) categories[i.bron]=0;
+      categories[i.bron] += Math.abs(i.bedrag);
+    }
+  });
+
+  const ctx = document.getElementById("expenseChart").getContext("2d");
+  if(expenseChart) expenseChart.destroy();
+
+  expenseChart = new Chart(ctx, {
+    type:'bar',
+    data:{
+      labels:Object.keys(categories),
+      datasets:[{
+        label:'Uitgaven per categorie',
+        data:Object.values(categories),
+        backgroundColor:'#ef4444'
+      }]
+    },
+    options:{
+      responsive:true,
+      plugins:{legend:{display:false}},
+      scales:{y:{beginAtZero:true}}
+    }
+  });
+}
+
+// ---------- EVENT LISTENERS ----------
+document.getElementById("addBtn").addEventListener("click", openModal);
+document.getElementById("closeModalBtn").addEventListener("click", closeModal);
+document.getElementById("saveEntryBtn").addEventListener("click", saveEntry);
+document.getElementById("calBtn").addEventListener("click", buildCalendar);
+document.getElementById("fixedCostsBtn").addEventListener("click", openFixedCosts);
+document.getElementById("closeFixedBtn").addEventListener("click", closeFixedCosts);
+document.getElementById("saveFixedBtn").addEventListener("click", saveFixedCosts);
+document.getElementById("themeToggle").addEventListener("click", ()=>document.body.classList.toggle("dark"));
+document.getElementById("closeDayBtn").addEventListener("click", closeDayModal);
