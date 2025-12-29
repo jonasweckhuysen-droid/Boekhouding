@@ -1,78 +1,88 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-  <meta charset="UTF-8">
-  <title>Login – Boekhouding</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Meneige boekhouding</title>
 
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #0f172a;
-      color: white;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-    }
-    .box {
-      text-align: center;
-    }
-    button {
-      padding: 14px 22px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-  </style>
+<!-- PWA -->
+<link rel="manifest" href="/Boekhouding/manifest.json">
+<meta name="theme-color" content="#2563eb">
+
+<!-- CSS -->
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+  body { font-family: 'Segoe UI', sans-serif; margin:0; background:#f5f5f5; }
+  header { background:#2563eb; color:white; padding:20px; text-align:center; border-bottom:5px solid #1e40af; }
+  header h1 { margin:0; font-size:24px; }
+  #saldoBox { margin-top:10px; font-size:20px; }
+  main { padding:20px; max-width:600px; margin:auto; }
+  .btn-group button { margin:5px; padding:10px 15px; font-size:16px; border:none; border-radius:6px; cursor:pointer; }
+  .btn-primary { background:#10b981; color:white; }
+  .btn-secondary { background:#f59e0b; color:white; }
+  .modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); justify-content:center; align-items:center; z-index:1000; }
+  .modalContent { background:white; padding:20px; border-radius:10px; width:90%; max-width:400px; }
+  .modalContent input, .modalContent select { width:100%; padding:8px; margin:5px 0 15px 0; border-radius:5px; border:1px solid #ccc; }
+  .entries { margin-top:20px; }
+  .entry { padding:10px; margin-bottom:5px; border-radius:6px; display:flex; justify-content:space-between; align-items:center; color:white; }
+  .entry.inkomst { background:#10b981; }
+  .entry.uitgave { background:#ef4444; }
+  .entry button { background:#f3f4f6; color:black; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; }
+  #search { width:100%; padding:8px; margin-bottom:15px; border-radius:5px; border:1px solid #ccc; }
+</style>
 </head>
 
 <body>
 
-<div class="box">
-  <h2>🔐 Beveiligde toegang</h2>
-  <p>Log in met je Google-account</p>
-  <button id="loginBtn">Inloggen met Google</button>
+<header>
+  <h1><i class="fas fa-wallet"></i> Meneige boekhouding</h1>
+  <div id="saldoBox">€ 0,00</div>
+</header>
+
+<main>
+  <div class="btn-group">
+    <button class="btn-primary" onclick="openModal()"><i class="fas fa-plus-circle"></i> Nieuwe Invoer</button>
+  </div>
+
+  <input type="text" id="search" placeholder="🔍 Zoeken op bron..." oninput="filterEntries()">
+
+  <div class="entries" id="entriesList"></div>
+</main>
+
+<!-- Modal -->
+<div class="modal" id="modal">
+  <div class="modalContent">
+    <h2>Nieuwe Invoer</h2>
+
+    <label>Soort:</label>
+    <select id="soort">
+      <option value="inkomst">Inkomst</option>
+      <option value="uitgave">Uitgave</option>
+    </select>
+
+    <label>Van / Naar:</label>
+    <input type="text" id="bron" placeholder="Bijv. Loon / Colruyt">
+
+    <label>Datum:</label>
+    <input type="date" id="datum">
+
+    <label>Bedrag:</label>
+    <input type="number" id="bedrag" placeholder="Bijv. 1200.00">
+
+    <label>
+      <input type="checkbox" id="recurring">
+      Terugkerende maandelijkse kost
+    </label>
+
+    <div style="text-align:right;">
+      <button class="btn-secondary" onclick="closeModal()">Annuleren</button>
+      <button class="btn-primary" onclick="saveEntry()">Opslaan</button>
+    </div>
+  </div>
 </div>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import {
-  getAuth,
-  GoogleAuthProvider,
-  signInWithPopup,
-  onAuthStateChanged,
-  signOut
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyAkBAw17gNU_EBhn8dKgyY5qv-ecfWaG2s",
-  authDomain: "finance-jonas.firebaseapp.com",
-  projectId: "finance-jonas",
-  storageBucket: "finance-jonas.firebasestorage.app",
-  messagingSenderId: "497182804753",
-  appId: "1:497182804753:web:ea942a578dd1c15f631ab0"
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const provider = new GoogleAuthProvider();
-
-const ALLOWED_EMAIL = "jonasweckhuysen@gmail.com";
-
-document.getElementById("loginBtn").onclick = () => {
-  signInWithPopup(auth, provider);
-};
-
-onAuthStateChanged(auth, (user) => {
-  if (user && user.email === ALLOWED_EMAIL) {
-    window.location.href = "app.html";
-  } else if (user) {
-    alert("❌ Geen toegang tot deze applicatie");
-    signOut(auth);
-  }
-});
-</script>
-
+<script src="script.js"></script>
 </body>
 </html>
