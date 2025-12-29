@@ -38,12 +38,14 @@ onAuthStateChanged(auth,user=>{if(!user) login(); else {window.user=user; loadDa
 const modal=document.getElementById("modal");
 const dayModal=document.getElementById("dayModal");
 const fixedCostsModal=document.getElementById("fixedCostsModal");
+const savingsModal=document.getElementById("savingsModal");
 
 const soort=document.getElementById("soort");
 const bron=document.getElementById("bron");
 const datum=document.getElementById("datum");
 const bedrag=document.getElementById("bedrag");
 const recurring=document.getElementById("recurring");
+const saveToSavings=document.getElementById("saveToSavings");
 
 const saldoDiv=document.getElementById("saldo");
 const saldoBar=document.getElementById("saldoBar");
@@ -57,8 +59,15 @@ const electriciteitInput=document.getElementById("electriciteitInput");
 const mobiliteitInput=document.getElementById("mobiliteitInput");
 const verzekeringInput=document.getElementById("verzekeringInput");
 
+const savingsList=document.getElementById("savingsList");
+const savingsBtn=document.getElementById("savingsBtn");
+const savingsName=document.getElementById("savingsName");
+const savingsTarget=document.getElementById("savingsTarget");
+const saveSavingsBtn=document.getElementById("saveSavingsBtn");
+const closeSavingsBtn=document.getElementById("closeSavingsBtn");
+
 // --- Modals ---
-function openModal(){ modal.style.display="flex"; }
+function openModal(){ modal.style.display="flex"; updateSavingsDropdown(); }
 function closeModal(){ modal.style.display="none"; }
 function openDayModal(){ dayModal.style.display="flex"; }
 function closeDayModal(){ dayModal.style.display="none"; }
@@ -72,6 +81,40 @@ function openFixedCosts(){
 }
 function closeFixedCosts(){ fixedCostsModal.style.display="none"; }
 
+function openSavingsModal(){
+  savingsModal.style.display="flex";
+  savingsName.value="";
+  savingsTarget.value="";
+}
+function closeSavingsModal(){ savingsModal.style.display="none"; }
+
+// --- Spaarpotten ---
+function getSavings(){ return JSON.parse(localStorage.getItem("savings"))||[]; }
+function saveSavingsToStorage(savings){ localStorage.setItem("savings",JSON.stringify(savings)); }
+
+function updateSavingsUI(){
+  const savings=getSavings();
+  if(savings.length===0) savingsList.innerText="Geen spaarpotjes ingesteld";
+  else savingsList.innerHTML = savings.map(s=>`<span>${s.name}: € ${s.amount.toFixed(2)} / € ${s.target.toFixed(2)}</span>`).join("<br>");
+}
+
+function updateSavingsDropdown(){
+  const savings=getSavings();
+  saveToSavings.innerHTML='<option value="">💾 Niet naar spaarpot</option>';
+  savings.forEach((s,i)=>saveToSavings.innerHTML += `<option value="${i}">${s.name}</option>`);
+}
+
+function saveSavingsGoal(){
+  const name=savingsName.value.trim();
+  const target=parseFloat(savingsTarget.value);
+  if(!name||isNaN(target)){ alert("Vul naam en doelbedrag in"); return;}
+  const savings=getSavings();
+  savings.push({name,target,amount:0});
+  saveSavingsToStorage(savings);
+  updateSavingsUI();
+  closeSavingsModal();
+}
+
 // --- Save Entry ---
 async function saveEntry(){
   const soortVal=soort.value;
@@ -79,8 +122,23 @@ async function saveEntry(){
   const datumVal=datum.value;
   const bedragVal=parseFloat(bedrag.value)*(soortVal==="uitgave"?-1:1);
   const recurringVal=recurring.checked;
+  const savingsIndex = saveToSavings.value;
+
   if(!datumVal||isNaN(bedragVal)){alert("Vul alles in"); return;}
   const categorie = categoryMap[bronVal] || "Overig";
+
+  // Update spaarpot als gekozen
+  if(savingsIndex!==""){
+    const savings=getSavings();
+    if(soortVal==="inkomst"){
+      savings[savingsIndex].amount += bedragVal;
+      saveSavingsToStorage(savings);
+      updateSavingsUI();
+    } else {
+      alert("Uitgaven kunnen niet direct naar spaarpotten worden geboekt.");
+    }
+  }
+
   await addDoc(collection(db,"users",user.uid,"items"),{
     soort:soortVal,
     bron:bronVal,
@@ -112,7 +170,7 @@ function updateFixedCostsUI(){
   const costs=JSON.parse(localStorage.getItem("fixedCosts"))||{};
   const keys=Object.keys(costs).filter(k=>costs[k]>0);
   if(keys.length===0) fixedCostsList.innerText="Geen vaste kosten ingesteld";
-  else fixedCostsList.innerHTML=keys.map(k=>`<span>${k.charAt(0).toUpperCase()+k.slice(1)}: € ${costs[k].toFixed(2)}</span>`).join("<br>");
+  else fixedCostsList.innerHTML=keys.map(k=>`${k.charAt(0).toUpperCase()+k.slice(1)}: € ${costs[k].toFixed(2)}`).join("<br>");
 }
 
 // --- Saldo UI ---
@@ -150,6 +208,7 @@ async function loadData(){
 
   window.items = items;
   updateFixedCostsUI();
+  updateSavingsUI();
   updateSaldoUI(saldo,spent);
   updateBudgetChart(items);
 }
@@ -233,3 +292,7 @@ document.getElementById("closeFixedBtn").addEventListener("click", closeFixedCos
 document.getElementById("saveFixedBtn").addEventListener("click", saveFixedCosts);
 document.getElementById("themeToggle").addEventListener("click", ()=>document.body.classList.toggle("dark"));
 document.getElementById("closeDayBtn").addEventListener("click", closeDayModal);
+
+savingsBtn.addEventListener("click", openSavingsModal);
+saveSavingsBtn.addEventListener("click", saveSavingsGoal);
+closeSavingsBtn.addEventListener("click", closeSavingsModal);
