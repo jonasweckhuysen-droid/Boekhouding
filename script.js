@@ -29,22 +29,10 @@ const categoryMap = {
 
 // --- Auth ---
 const login = async () => {
-  try { 
-    const result = await signInWithPopup(auth, provider); 
-    window.user = result.user; 
-    loadData(); 
-  } catch(e){
-    console.error(e);
-    alert("Login mislukt!");
-  }
+  try { const result = await signInWithPopup(auth, provider); window.user = result.user; loadData(); }
+  catch(e){console.error(e);alert("Login mislukt!");}
 };
-onAuthStateChanged(auth,user=>{
-  if(!user) login(); 
-  else {
-    window.user=user; 
-    loadData();
-  }
-});
+onAuthStateChanged(auth,user=>{if(!user) login(); else {window.user=user; loadData();}});
 
 // --- Elements ---
 const modal=document.getElementById("modal");
@@ -85,6 +73,8 @@ const verzekeringInput=document.getElementById("verzekeringInput");
 // --- Spaarpotten ---
 function getSavings(){ return JSON.parse(localStorage.getItem("savings"))||[]; }
 function saveSavingsToStorage(s){ localStorage.setItem("savings",JSON.stringify(s)); }
+
+// --- Spaarpot dropdown update ---
 function updateSavingsUI(){
   const savings = getSavings();
   saveToSavings.innerHTML="";
@@ -134,18 +124,15 @@ async function saveEntry(){
 
   // --- Spaarpot update ---
   const savings = getSavings();
-
   if(savingsIndex !== ""){
     const sIndex = parseInt(savingsIndex);
     if(soortVal === "inkomst"){
-      // Voeg bedrag toe aan spaarpot
       savings[sIndex].amount += bedragVal;
       saveSavingsToStorage(savings);
       updateSavingsUI();
       updateSavingsListUI();
       bedragVal = 0; 
     } else {
-      // Haal bedrag van spaarpot (tot max van saldo spaarpot)
       const spaarBedrag = Math.min(bedragVal, savings[sIndex].amount);
       savings[sIndex].amount -= spaarBedrag;
       saveSavingsToStorage(savings);
@@ -231,178 +218,85 @@ async function loadData(){
   updateSaldoUI(saldo,spent);
   updateBudgetChart(items);
   updateSavingsUI();
-  updateSavingsListUI();
-}
-
-// --- Calendar ---
-function buildCalendar(){
-  const calendar=document.getElementById("calendar");
-  calendar.innerHTML="";
-  const now=new Date();
-  const year=now.getFullYear();
-  const month=now.getMonth();
-  const firstDay=new Date(year,month,1).getDay();
-  const daysInMonth=new Date(year,month+1,0).getDate();
-
-  for(let i=0;i<firstDay;i++) calendar.appendChild(document.createElement("div"));
-
-  for(let d=1;d<=daysInMonth;d++){
-    const dayDiv=document.createElement("div");
-    dayDiv.className="day";
-    dayDiv.innerText=d;
-
-    const dayItems = window.items.filter(item=>{
-      const itemDate=item.datumObj;
-      return itemDate.getDate()===d && itemDate.getMonth()===month && itemDate.getFullYear()===year;
-    });
-
-    if(dayItems.length>0) dayDiv.classList.add("has");
-
-    dayDiv.addEventListener("click",()=>{
-      dayTitle.innerText=`${d}/${month+1}/${year}`;
-      dayList.innerHTML="";
-      if(dayItems.length===0) dayList.innerHTML="<p>Geen bewegingen</p>";
-      else dayItems.forEach(item=>{
-        const p=document.createElement("div");
-        p.className="entry "+(item.bedrag>=0?"pos":"neg");
-        const icon=item.bedrag>=0?"💵":"💸";
-        let spaarTxt = item.savingsIndex!==null ? " (Spaarpot)" : "";
-        p.innerText=`${icon} ${item.soort} - ${item.bron} : € ${item.bedrag.toFixed(2).replace(".",",")}${spaarTxt}`;
-        dayList.appendChild(p);
-      });
-      openDayModal();
-    });
-
-    calendar.appendChild(dayDiv);
-  }
-}
-
-// --- Budget Chart ---
-let expenseChart=null;
-function updateBudgetChart(items){
-  const now=new Date();
-  const m=now.getMonth(), y=now.getFullYear();
-  const categories={};
-  items.forEach(i=>{
-    const d=i.datumObj;
-    if(d.getMonth()===m && d.getFullYear()===y && i.bedrag<0){
-      const cat = i.categorie || "Overig";
-      categories[cat] = (categories[cat]||0) + Math.abs(i.bedrag);
-    }
-  });
-
-  const ctx=document.getElementById("expenseChart").getContext("2d");
-  if(expenseChart) expenseChart.destroy();
-
-  expenseChart = new Chart(ctx,{
-    type:'bar',
-    data:{
-      labels:Object.keys(categories),
-      datasets:[{label:'Uitgaven per categorie',data:Object.values(categories),backgroundColor:'#ef4444'}]
-    },
-    options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}
-  });
 }
 
 // --- Event Listeners ---
 document.getElementById("addBtn").addEventListener("click", openModal);
 document.getElementById("closeModalBtn").addEventListener("click", closeModal);
 document.getElementById("saveEntryBtn").addEventListener("click", saveEntry);
-document.getElementById("calBtn").addEventListener("click", buildCalendar);
 document.getElementById("fixedCostsBtn").addEventListener("click", openFixedCosts);
 document.getElementById("closeFixedBtn").addEventListener("click", closeFixedCosts);
-document.getElementById("saveFixedBtn").addEventListener("click", saveFixedCosts);
-document.getElementById("themeToggle").addEventListener("click", ()=>document.body.classList.toggle("dark"));
-document.getElementById("closeDayBtn").addEventListener("click", closeDayModal);
 
-// --- Spaarpot helper functies ---
-window.addSavings = (name, amount=0) => {
-  const savings = getSavings();
-  savings.push({name, amount});
-  saveSavingsToStorage(savings);
-  updateSavingsUI();
-  updateSavingsListUI();
-}
-window.deleteSavings = (index) => {
-  const savings = getSavings();
-  savings.splice(index,1);
-  saveSavingsToStorage(savings);
-  updateSavingsUI();
-  updateSavingsListUI();
-}
-
-// --- Spaarpot modal functies ---
+// --- Spaarpot beheer modal ---
 function openBeheerModal() {
   document.getElementById("savingsModal").style.display = "flex";
+  renderSavingsBeheer();
 }
+function closeBeheerModal() { document.getElementById("savingsModal").style.display = "none"; }
 
-function closeBeheerModal() {
-  document.getElementById("savingsModal").style.display = "none";
-}
-
-function saveBeheer() {
-  const name = document.getElementById("savingsName").value.trim();
-  const target = parseFloat(document.getElementById("savingsTarget").value);
-
-  if (!name || isNaN(target)) {
-    alert("Vul alles correct in");
-    return;
-  }
-
+function renderSavingsBeheer() {
+  const container = document.getElementById("savingsList");
   const savings = getSavings();
-  savings.push({ name, amount: target });
-  saveSavingsToStorage(savings);
+  container.innerHTML = "";
+  if(savings.length===0){ container.innerText = "Geen spaarpotjes ingesteld"; return; }
 
-  document.getElementById("savingsName").value = "";
-  document.getElementById("savingsTarget").value = "";
-
-  updateSavingsUI();
-  updateSavingsListUI();
-
-  closeBeheerModal();
-}
-
-// --- Event listener voor “➕ Beheer” knop ---
-document.getElementById("savingsBtn").addEventListener("click", openBeheerModal);
-document.getElementById("closeSavingsBtn").addEventListener("click", closeBeheerModal);
-document.getElementById("saveSavingsBtn").addEventListener("click", saveBeheer);
-
-function updateSavingsListUI() {
-  const savingsListDiv = document.getElementById("savingsList");
-  const savings = getSavings();
-  if(savings.length === 0) {
-    savingsListDiv.innerText = "Geen spaarpotjes ingesteld";
-    return;
-  }
-  savingsListDiv.innerHTML = "";
   savings.forEach((s,i)=>{
     const div = document.createElement("div");
     div.style.display = "flex";
-    div.style.justifyContent = "space-between";
     div.style.alignItems = "center";
-    div.style.marginBottom = "4px";
+    div.style.gap = "8px";
 
-    const txt = document.createElement("span");
-    txt.innerText = `${s.name}: € ${s.amount.toFixed(2)}`;
+    const nameInput = document.createElement("input");
+    nameInput.value = s.name;
+    nameInput.style.flex="1";
+    nameInput.addEventListener("input", e=>{ savings[i].name=e.target.value; saveSavingsToStorage(savings); updateSavingsUI(); });
+
+    const amountInput = document.createElement("input");
+    amountInput.type="number";
+    amountInput.value = s.amount.toFixed(2);
+    amountInput.style.width="80px";
+    amountInput.addEventListener("input", e=>{
+      let val=parseFloat(e.target.value); if(isNaN(val)) val=0;
+      savings[i].amount = val;
+      saveSavingsToStorage(savings);
+      updateSavingsUI();
+    });
 
     const delBtn = document.createElement("button");
-    delBtn.innerText = "🗑️";
-    delBtn.style.border = "none";
-    delBtn.style.background = "transparent";
-    delBtn.style.cursor = "pointer";
+    delBtn.innerText = "🗑️"; delBtn.style.border="none"; delBtn.style.background="transparent"; delBtn.style.cursor="pointer";
     delBtn.addEventListener("click", ()=>{
-      if(confirm(`Wil je "${s.name}" verwijderen?`)) {
-        const allSavings = getSavings();
-        allSavings.splice(i,1);
-        saveSavingsToStorage(allSavings);
+      if(confirm(`Wil je "${s.name}" verwijderen?`)){
+        savings.splice(i,1);
+        saveSavingsToStorage(savings);
+        renderSavingsBeheer();
         updateSavingsUI();
-        updateSavingsListUI();
       }
     });
 
-    div.appendChild(txt);
-    div.appendChild(delBtn);
-    savingsListDiv.appendChild(div);
+    div.appendChild(nameInput); div.appendChild(amountInput); div.appendChild(delBtn);
+    container.appendChild(div);
   });
 }
-updateSavingsListUI();
+
+function addBeheerSavings(){
+  const name = document.getElementById("savingsName").value.trim();
+  const amount = parseFloat(document.getElementById("savingsTarget").value);
+  if(!name || isNaN(amount)){ alert("Vul alles correct in"); return; }
+
+  const savings = getSavings();
+  savings.push({name,amount});
+  saveSavingsToStorage(savings);
+
+  document.getElementById("savingsName").value="";
+  document.getElementById("savingsTarget").value="";
+
+  renderSavingsBeheer();
+  updateSavingsUI();
+}
+
+document.getElementById("savingsBtn").addEventListener("click", openBeheerModal);
+document.getElementById("closeSavingsBtn").addEventListener("click", closeBeheerModal);
+document.getElementById("saveSavingsBtn").addEventListener("click", addBeheerSavings);
+
+// --- Init ---
+updateSavingsUI();
