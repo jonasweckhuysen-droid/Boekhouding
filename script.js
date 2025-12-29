@@ -311,3 +311,33 @@ window.deleteSavings = (index) => {
   saveSavingsToStorage(savings);
   updateSavingsUI();
     }
+
+// --- Spaarpot modal functies ---
+function openBeheerModal() {
+  document.getElementById("savingsModal").style.display = "flex";
+}
+
+function closeBeheerModal() {
+  document.getElementById("savingsModal").style.display = "none";
+}
+
+function saveBeheer() {
+  const name = document.getElementById("savingsName").value.trim();
+  const target = parseFloat(document.getElementById("savingsTarget").value);
+
+  if (!name || isNaN(target)) {
+    alert("Vul alles correct in");
+    return;
+  }
+
+  const savings = getSavings();
+  savings.push({name, amount: target});
+  saveSavingsToStorage(savings);
+  updateSavingsUI();
+  closeBeheerModal();
+}
+
+// --- Event listener voor “➕ Beheer” knop ---
+document.getElementById("savingsBtn").addEventListener("click", openBeheerModal);
+document.getElementById("closeSavingsBtn").addEventListener("click", closeBeheerModal);
+document.getElementById("saveSavingsBtn").addEventListener("click", saveBeheer);
