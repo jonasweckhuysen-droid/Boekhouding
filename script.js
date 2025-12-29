@@ -193,6 +193,85 @@ function buildCalendar(){
 }
 
 // =====================
+// VASTE KOSTEN
+// =====================
+const fixedCostsModal = document.getElementById("fixedCostsModal");
+const fixedCostsBtn = document.getElementById("fixedCostsBtn");
+const saveFixedBtn = document.getElementById("saveFixedBtn");
+const closeFixedBtn = document.getElementById("closeFixedBtn");
+
+const leningInput = document.getElementById("leningInput");
+const electriciteitInput = document.getElementById("electriciteitInput");
+const mobiliteitInput = document.getElementById("mobiliteitInput");
+const verzekeringInput = document.getElementById("verzekeringInput");
+
+function openFixedCosts(){
+  fixedCostsModal.style.display="flex";
+  const costs = JSON.parse(localStorage.getItem("fixedCosts")) || {};
+  leningInput.value = costs.lening || "";
+  electriciteitInput.value = costs.electriciteit || "";
+  mobiliteitInput.value = costs.mobiliteit || "";
+  verzekeringInput.value = costs.verzekering || "";
+}
+
+function closeFixedCosts(){ fixedCostsModal.style.display="none"; }
+
+function saveFixedCosts(){
+  const costs = {
+    lening: parseFloat(leningInput.value) || 0,
+    electriciteit: parseFloat(electriciteitInput.value) || 0,
+    mobiliteit: parseFloat(mobiliteitInput.value) || 0,
+    verzekering: parseFloat(verzekeringInput.value) || 0
+  };
+  localStorage.setItem("fixedCosts", JSON.stringify(costs));
+  closeFixedCosts();
+  updateFixedCostsUI();
+  loadData(); // herbereken verwachte eindtotaal
+}
+
+// =====================
+// UI UPDATE FIXED COSTS
+// =====================
+function updateFixedCostsUI(){
+  const costs = JSON.parse(localStorage.getItem("fixedCosts")) || {};
+  const listDiv = document.getElementById("fixedCostsList");
+  const keys = Object.keys(costs).filter(k=>costs[k]>0);
+  if(keys.length===0){
+    listDiv.innerText = "Geen vaste kosten ingesteld";
+  } else {
+    listDiv.innerHTML = keys.map(k=>`<span>${k.charAt(0).toUpperCase()+k.slice(1)}: € ${costs[k].toFixed(2)}</span>`).join("<br>");
+  }
+}
+
+// =====================
+// HUIDIG EN VERWACHT EINDE
+// =====================
+function updateSaldoUI(saldo=0){
+  const costs = JSON.parse(localStorage.getItem("fixedCosts")) || {};
+  const totalFixed = Object.values(costs).reduce((a,b)=>a+b,0);
+  const expectedEnd = saldo - totalFixed;
+
+  // Saldo visueel
+  saldoDiv.innerHTML = saldo>=0 
+    ? `💰 € ${saldo.toFixed(2).replace(".",",")}` 
+    : `🔴 € ${saldo.toFixed(2).replace(".",",")}`;
+
+  // Verwachte eindtotaal
+  const expectedDiv = document.getElementById("expectedEnd");
+  if(!expectedDiv){
+    const div = document.createElement("div");
+    div.id = "expectedEnd";
+    div.style.textAlign="center";
+    div.style.marginTop="8px";
+    div.innerHTML = `🔮 Verwacht einde maand: € ${expectedEnd.toFixed(2).replace(".",",")}`;
+    saldoDiv.parentNode.appendChild(div);
+  } else {
+    expectedDiv.innerHTML = `🔮 Verwacht einde maand: € ${expectedEnd.toFixed(2).replace(".",",")}`;
+  }
+}
+
+
+// =====================
 // THEME
 // =====================
 function toggleTheme(){ document.body.classList.toggle("dark"); }
