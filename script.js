@@ -311,3 +311,106 @@ window.deleteSavings = (index) => {
   saveSavingsToStorage(savings);
   updateSavingsUI();
 }
+
+// --- Dynamische categorieën via localStorage ---
+function getCategoryMap() {
+  return JSON.parse(localStorage.getItem("categoryMap")) || {
+    "Albert Heijn":"Boodschappen",
+    "Colruyt":"Boodschappen",
+    "Shell":"Mobiliteit",
+    "Telenet":"Internet",
+    "Netflix":"Entertainment"
+  };
+}
+function saveCategoryMap(map) {
+  localStorage.setItem("categoryMap", JSON.stringify(map));
+}
+function addCategory(bron, categorie){
+  if(!bron || !categorie) return;
+  const map = getCategoryMap();
+  map[bron] = categorie;
+  saveCategoryMap(map);
+  updateCategoryListUI();
+}
+function deleteCategory(bron){
+  const map = getCategoryMap();
+  delete map[bron];
+  saveCategoryMap(map);
+  updateCategoryListUI();
+}
+function updateCategoryListUI(){
+  const map = getCategoryMap();
+  const listDiv = document.getElementById("categoryList");
+  listDiv.innerHTML = "";
+  Object.entries(map).forEach(([b,c])=>{
+    const div = document.createElement("div");
+    div.style.display="flex"; div.style.justifyContent="space-between"; div.style.margin="4px 0";
+    div.innerHTML = `<span>${b} → ${c}</span> <button class="btn cancel" style="padding:2px 6px;font-size:12px;">❌</button>`;
+    div.querySelector("button").addEventListener("click",()=>deleteCategory(b));
+    listDiv.appendChild(div);
+  });
+}
+
+// --- Event Listeners categorie modal ---
+const categoryModal = document.getElementById("categoryModal");
+document.getElementById("manageCategoriesBtn").addEventListener("click",()=>{
+  categoryModal.style.display="flex";
+  updateCategoryListUI();
+});
+document.getElementById("closeCategoryBtn").addEventListener("click",()=>categoryModal.style.display="none");
+document.getElementById("addCategoryBtn").addEventListener("click",()=>{
+  const bron = document.getElementById("newBron").value.trim();
+  const categorie = document.getElementById("newCategorie").value.trim();
+  addCategory(bron,categorie);
+  document.getElementById("newBron").value="";
+  document.getElementById("newCategorie").value="";
+});
+
+// --- Save Entry aangepast met dynamische categorieën ---
+async function saveEntry(){
+  const soortVal=soort.value;
+  const bronVal=bron.value;
+  const datumVal=datum.value;
+  let bedragVal=parseFloat(bedrag.value);
+  if(isNaN(bedragVal)){ alert("Vul een geldig bedrag in"); return; }
+  const recurringVal = recurring.checked;
+  const savingsIndex = saveToSavings.value;
+
+  if(!datumVal){alert("Vul een datum in"); return;}
+  const categoryMap = getCategoryMap();
+  const categorie = categoryMap[bronVal] || "Overig";
+
+  // --- Spaarpot update ---
+  const savings = getSavings();
+  if(savingsIndex!==""){
+    const sIndex = parseInt(savingsIndex);
+    if(soortVal==="inkomst"){
+      savings[sIndex].amount += bedragVal;
+      saveSavingsToStorage(savings);
+      updateSavingsUI();
+      bedragVal = 0; 
+    } else {
+      const spaarBedrag = Math.min(bedragVal, savings[sIndex].amount);
+      savings[sIndex].amount -= spaarBedrag;
+      saveSavingsToStorage(savings);
+      updateSavingsUI();
+      bedragVal = bedragVal - spaarBedrag;
+    }
+  }
+
+  if(soortVal==="uitgave") bedragVal = -Math.abs(bedragVal);
+
+  await addDoc(collection(db,"users",user.uid,"items"),{
+    soort:soortVal,
+    bron:bronVal,
+    datum:datumVal,
+    bedrag:bedragVal,
+    categorie:categorie,
+    recurring:recurringVal,
+    savingsIndex: savingsIndex!=="" ? parseInt(savingsIndex) : null,
+    created:Date.now()
+  });
+
+  closeModal();
+  loadData();
+}
