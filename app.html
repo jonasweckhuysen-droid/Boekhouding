@@ -111,6 +111,28 @@ body.dark .themeToggle{background:rgba(30,30,30,0.8);color:white;}
   <button class="btn btn-view" id="budgetBtn"><i class="fa-solid fa-gear"></i> Budget instellen</button>
 </div>
 
+<div id="fixedCostsCard" style="max-width:360px;margin:10px auto;background:white;padding:16px;border-radius:18px;box-shadow:0 6px 18px rgba(0,0,0,.1);">
+  <p>Vaste Kosten</p>
+  <div id="fixedCostsList">Geen vaste kosten ingesteld</div>
+  <br>
+  <button class="btn btn-view" id="fixedCostsBtn">⚙️ Instellen</button>
+</div>
+
+<!-- FIXED COSTS MODAL -->
+<div id="fixedCostsModal">
+  <div class="box">
+    <h2>Vaste Kosten</h2>
+    <input type="number" id="leningInput" placeholder="Lening">
+    <input type="number" id="electriciteitInput" placeholder="Electriciteit">
+    <input type="number" id="mobiliteitInput" placeholder="Mobiliteit">
+    <input type="number" id="verzekeringInput" placeholder="Verzekering">
+    <br><br>
+    <button class="btn save" id="saveFixedBtn">Opslaan</button>
+    <button class="btn cancel" id="closeFixedBtn">Annuleren</button>
+  </div>
+</div>
+
+
 <div id="budgetWarning"></div>
 
 <div class="actions">
