@@ -121,23 +121,27 @@ async function saveEntry(){
   const categorie = categoryMap[bronVal] || "Overig";
 
   // --- Spaarpot update ---
-  const savings = getSavings();
+const savings = getSavings();
 
-  if(savingsIndex!==""){
-    const sIndex = parseInt(savingsIndex);
-    if(soortVal==="inkomst"){
-      savings[sIndex].amount += bedragVal;
-      saveSavingsToStorage(savings);
-      updateSavingsUI();
-      bedragVal = 0; 
-    } else {
-      const spaarBedrag = Math.min(bedragVal, savings[sIndex].amount);
-      savings[sIndex].amount -= spaarBedrag;
-      saveSavingsToStorage(savings);
-      updateSavingsUI();
-      bedragVal = bedragVal - spaarBedrag;
-    }
+if(savingsIndex !== ""){
+  const sIndex = parseInt(savingsIndex);
+  if(soortVal === "inkomst"){
+    // Voeg bedrag toe aan spaarpot
+    savings[sIndex].amount += bedragVal;
+    saveSavingsToStorage(savings);
+    updateSavingsUI();
+    updateSavingsListUI(); // ✅ realtime update
+    bedragVal = 0; 
+  } else {
+    // Haal bedrag van spaarpot (tot max van saldo spaarpot)
+    const spaarBedrag = Math.min(bedragVal, savings[sIndex].amount);
+    savings[sIndex].amount -= spaarBedrag;
+    saveSavingsToStorage(savings);
+    updateSavingsUI();
+    updateSavingsListUI(); // ✅ realtime update
+    bedragVal = bedragVal - spaarBedrag;
   }
+}
 
   if(soortVal==="uitgave") bedragVal = -Math.abs(bedragVal);
 
