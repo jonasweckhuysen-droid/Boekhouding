@@ -9,6 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
 
 <style>
+/* --- CSS blijft ongewijzigd --- */
 body{
   margin:0;
   font-family:'Poppins',sans-serif;
@@ -114,7 +115,7 @@ input,select{
 
 <body>
 
-<div class="themeToggle" onclick="toggleTheme()">🌙</div>
+<div class="themeToggle" id="themeToggle">🌙</div>
 
 <header>
 <h1>Meneige Boekhouding</h1>
@@ -124,13 +125,14 @@ input,select{
 <p>Huidig saldo</p>
 <div id="saldo">€ 0,00</div>
 </div>
+
 <div id="budgetCard" style="max-width:360px;margin:10px auto;
 background:white;padding:16px;border-radius:18px;
 box-shadow:0 6px 18px rgba(0,0,0,.1);">
   <p>Maandelijks budget</p>
   <strong id="budgetAmount">Niet ingesteld</strong>
   <br><br>
-  <button class="btn btn-view" onclick="openBudget()">⚙️ Budget instellen</button>
+  <button class="btn btn-view" id="budgetBtn">⚙️ Budget instellen</button>
 </div>
 
 <div id="budgetWarning" style="display:none;
@@ -139,8 +141,8 @@ padding:14px;border-radius:14px;
 text-align:center;font-weight:500;"></div>
 
 <div class="actions">
-<button class="btn add" onclick="openModal()">➕ Toevoegen</button>
-<button class="btn cal" onclick="buildCalendar()">📅 Kalender</button>
+<button class="btn add" id="addBtn">➕ Toevoegen</button>
+<button class="btn cal" id="calBtn">📅 Kalender</button>
 </div>
 
 <div id="calendar"></div>
@@ -162,8 +164,8 @@ text-align:center;font-weight:500;"></div>
 <label><input type="checkbox" id="recurring"> Maandelijks</label>
 
 <br><br>
-<button class="btn add" onclick="saveEntry()">Opslaan</button>
-<button class="btn" onclick="closeModal()">Annuleren</button>
+<button class="btn add" id="saveEntryBtn">Opslaan</button>
+<button class="btn" id="closeModalBtn">Annuleren</button>
 </div>
 </div>
 
@@ -172,25 +174,27 @@ text-align:center;font-weight:500;"></div>
 <div class="box">
 <h3 id="dayTitle"></h3>
 <div id="dayList"></div>
-<button class="btn" onclick="closeDay()">Sluiten</button>
+<button class="btn" id="closeDayBtn">Sluiten</button>
 </div>
 </div>
 
-<script src="script.js"></script>
-  <div id="budgetModal" style="display:none" class="modal">
+<!-- BUDGET MODAL -->
+<div id="budgetModal" style="display:none" class="modal">
   <div class="modalBox">
     <h2>Maandelijks budget</h2>
     <input type="number" id="budgetInput" placeholder="Bijv. 1500">
     <br><br>
-    <button class="btn save" onclick="saveBudget()">Opslaan</button>
-    <button class="btn cancel" onclick="closeBudget()">Annuleren</button>
+    <button class="btn save" id="saveBudgetBtn">Opslaan</button>
+    <button class="btn cancel" id="closeBudgetBtn">Annuleren</button>
   </div>
-  </div>
-</body>
-  <script type="module">
+</div>
+
+<script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+import { openModal, closeModal, saveEntry, buildCalendar, openBudget, closeBudget, saveBudget, loadData, toggleTheme } from "./script.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAkBAw17gNU_EBhn8dKgyY5qv-ecfWaG2s",
@@ -202,20 +206,49 @@ const firebaseConfig = {
   measurementId: "G-0J29T1Z7MV"
 };
 
-window.firebaseApp = initializeApp(firebaseConfig);
-window.auth = getAuth(firebaseApp);
-window.db = getFirestore(firebaseApp);
+const firebaseApp = initializeApp(firebaseConfig);
+const auth = getAuth(firebaseApp);
+const db = getFirestore(firebaseApp);
 
-onAuthStateChanged(auth, user => {
+window.db = db;
+
+// --- LOGIN MET GOOGLE ---
+const provider = new GoogleAuthProvider();
+const login = async () => {
+  try {
+    const result = await signInWithPopup(auth, provider);
+    window.user = result.user;
+    loadData();
+  } catch(e) {
+    console.error(e);
+    alert("Login mislukt!");
+  }
+};
+
+onAuthStateChanged(auth, (user) => {
   if (!user) {
-    window.location.href = "index.html"; // loginpagina
+    login();
   } else {
     window.user = user;
-    loadData(); // BELANGRIJK
+    loadData();
   }
 });
+
+// --- Event Listeners ---
+document.getElementById("addBtn").addEventListener("click", openModal);
+document.getElementById("closeModalBtn").addEventListener("click", closeModal);
+document.getElementById("saveEntryBtn").addEventListener("click", saveEntry);
+
+document.getElementById("calBtn").addEventListener("click", buildCalendar);
+
+document.getElementById("budgetBtn").addEventListener("click", openBudget);
+document.getElementById("closeBudgetBtn").addEventListener("click", closeBudget);
+document.getElementById("saveBudgetBtn").addEventListener("click", saveBudget);
+
+document.getElementById("themeToggle").addEventListener("click", toggleTheme);
 </script>
 
-<script src="script.js"></script>
+<script type="module" src="script.js"></script>
 
+</body>
 </html>
