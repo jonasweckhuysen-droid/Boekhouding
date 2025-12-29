@@ -2,176 +2,30 @@
 <html lang="nl">
 <head>
 <meta charset="UTF-8">
-<title>💰 Budget Buddy</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<!-- CSP (Chart + Firebase OK) -->
-<meta http-equiv="Content-Security-Policy"
-content="
-default-src 'self';
-script-src 'self' 'unsafe-inline'
-https://www.gstatic.com
-https://cdnjs.cloudflare.com;
-style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com;
-connect-src 'self'
-https://*.firebaseio.com
-https://*.googleapis.com;
-img-src 'self' data:;
-">
-
-<link rel="stylesheet"
-href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/chart.js/4.4.1/chart.umd.min.js"></script>
-
-<style>
-body {
-  margin: 0;
-  font-family: "Segoe UI", sans-serif;
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  color: #fff;
-}
-
-header {
-  padding: 20px;
-  text-align: center;
-  font-size: 1.8em;
-  font-weight: bold;
-}
-
-.container {
-  max-width: 1100px;
-  margin: auto;
-  padding: 20px;
-}
-
-.card {
-  background: rgba(255,255,255,0.15);
-  backdrop-filter: blur(12px);
-  border-radius: 20px;
-  padding: 20px;
-  margin-bottom: 20px;
-}
-
-h2 {
-  margin-top: 0;
-}
-
-input, select, button {
-  padding: 10px;
-  border-radius: 10px;
-  border: none;
-  margin: 5px 0;
-  width: 100%;
-}
-
-button {
-  background: #34d399;
-  font-weight: bold;
-  cursor: pointer;
-}
-
-button:hover {
-  background: #22c55e;
-}
-
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit,minmax(250px,1fr));
-  gap: 15px;
-}
-
-.list {
-  margin-top: 10px;
-}
-
-.list-item {
-  display: flex;
-  justify-content: space-between;
-  padding: 8px;
-  background: rgba(0,0,0,0.2);
-  border-radius: 8px;
-  margin-bottom: 5px;
-}
-
-.progress-box {
-  margin-top: 10px;
-}
-
-progress {
-  width: 100%;
-  height: 20px;
-}
-
-canvas {
-  background: #fff;
-  border-radius: 15px;
-  padding: 10px;
-}
-</style>
+<title>Meneige Boekhouding</title>
 </head>
 
 <body>
 
-<header>💸 Budget Buddy</header>
+<h1>Meneige Boekhouding</h1>
 
-<div class="container">
+<button id="addBtn">➕ Toevoegen</button>
 
-<!-- INKOMST / UITGAVE -->
-<div class="card">
-<h2>➕ Transactie toevoegen</h2>
-<div class="grid">
-  <select id="type">
+<div id="saldo">€ 0,00</div>
+<div id="expectedEnd">€ 0,00</div>
+
+<!-- MODAL -->
+<div id="modal" style="display:none;">
+  <select id="soort">
     <option value="inkomst">Inkomst</option>
     <option value="uitgave">Uitgave</option>
   </select>
-
-  <input id="bron" placeholder="Van / Naar (vrij invulbaar)">
-  <input id="bedrag" type="number" placeholder="Bedrag (€)">
-  <input id="categorie" placeholder="Categorie">
-</div>
-<button onclick="addTransaction()">Opslaan</button>
+  <input id="bedrag" type="number" placeholder="Bedrag">
+  <button id="saveBtn">Opslaan</button>
+  <button id="closeBtn">Sluiten</button>
 </div>
 
-<!-- VASTE KOSTEN -->
-<div class="card">
-<h2>📌 Vaste kosten</h2>
-<div class="grid">
-  <input id="fixedName" placeholder="Naam (bv. Elektriciteit)">
-  <input id="fixedAmount" type="number" placeholder="Maandelijks bedrag">
-</div>
-<button onclick="addFixedCost()">Toevoegen</button>
-<div id="fixedList" class="list"></div>
-</div>
-
-<!-- SPAARDOELEN -->
-<div class="card">
-<h2>🎯 Spaardoelen</h2>
-<div class="grid">
-  <input id="goalName" placeholder="Doel (bv. Reis)">
-  <input id="goalTarget" type="number" placeholder="Doelbedrag">
-</div>
-<button onclick="addGoal()">Toevoegen</button>
-<div id="goalList" class="list"></div>
-</div>
-
-<!-- OVERZICHT -->
-<div class="card">
-<h2>📊 Overzicht</h2>
-<p><strong>Verwacht eindsaldo:</strong> €<span id="expectedTotal">0</span></p>
-<div class="progress-box">
-  <progress id="balanceBar" value="0" max="100"></progress>
-</div>
-</div>
-
-<!-- GRAFIEK -->
-<div class="card">
-<h2>📈 Uitgaven per categorie</h2>
-<canvas id="chart"></canvas>
-</div>
-
-</div>
-
-<script type="module" src="script.js"></script>
+<script type="module" src="script.js" defer></script>
 </body>
 </html>
