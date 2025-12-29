@@ -10,7 +10,13 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
 
 <!-- Content Security Policy -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; font-src 'self' https://fonts.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; script-src 'self' https://www.gstatic.com;">
+<meta http-equiv="Content-Security-Policy" content="
+  default-src 'self';
+  font-src 'self' https://fonts.gstatic.com data:;
+  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+  script-src 'self' https://www.gstatic.com;
+  connect-src 'self' https://*.firebaseio.com https://*.googleapis.com;
+">
 
 <style>
 body{
