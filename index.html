@@ -1,62 +1,77 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-  <meta charset="UTF-8" />
-  <title>Boekhouding – Login test</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <title>Login – Boekhouding</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .box {
+      text-align: center;
+    }
+    button {
+      padding: 14px 22px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+  </style>
 </head>
 
 <body>
 
-<h1 id="status">⏳ Controleren...</h1>
-<button id="loginBtn" style="display:none;">Login met Google</button>
-<button id="logoutBtn" style="display:none;">Uitloggen</button>
+<div class="box">
+  <h2>🔐 Beveiligde toegang</h2>
+  <p>Log in met je Google-account</p>
+  <button id="loginBtn">Inloggen met Google</button>
+</div>
 
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-  import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import {
+  getAuth,
+  GoogleAuthProvider,
+  signInWithPopup,
+  onAuthStateChanged,
+  signOut
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyAkBAw17gNU_EBhn8dKgyY5qv-ecfWaG2s",
-    authDomain: "finance-jonas.firebaseapp.com",
-    projectId: "finance-jonas",
-    storageBucket: "finance-jonas.firebasestorage.app",
-    messagingSenderId: "497182804753",
-    appId: "1:497182804753:web:ea942a578dd1c15f631ab0"
-  };
+const firebaseConfig = {
+  apiKey: "AIzaSyAkBAw17gNU_EBhn8dKgyY5qv-ecfWaG2s",
+  authDomain: "finance-jonas.firebaseapp.com",
+  projectId: "finance-jonas",
+  storageBucket: "finance-jonas.firebasestorage.app",
+  messagingSenderId: "497182804753",
+  appId: "1:497182804753:web:ea942a578dd1c15f631ab0"
+};
 
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const provider = new GoogleAuthProvider();
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const provider = new GoogleAuthProvider();
 
-  const status = document.getElementById("status");
-  const loginBtn = document.getElementById("loginBtn");
-  const logoutBtn = document.getElementById("logoutBtn");
+const ALLOWED_EMAIL = "jonasweckhuysen@gmail.com";
 
-  loginBtn.onclick = async () => {
-    try {
-      await signInWithPopup(auth, provider);
-    } catch (err) {
-      alert(err.message);
-    }
-  };
+document.getElementById("loginBtn").onclick = () => {
+  signInWithPopup(auth, provider);
+};
 
-  logoutBtn.onclick = async () => {
-    await signOut(auth);
-  };
-
-  // 🔑 DIT IS DE BELANGRIJKSTE CODE
-  onAuthStateChanged(auth, (user) => {
-    if (user) {
-      status.textContent = "✅ Ingelogd als: " + user.email;
-      loginBtn.style.display = "none";
-      logoutBtn.style.display = "inline-block";
-    } else {
-      status.textContent = "❌ Niet ingelogd";
-      loginBtn.style.display = "inline-block";
-      logoutBtn.style.display = "none";
-    }
-  });
+onAuthStateChanged(auth, (user) => {
+  if (user && user.email === ALLOWED_EMAIL) {
+    window.location.href = "app.html";
+  } else if (user) {
+    alert("❌ Geen toegang tot deze applicatie");
+    signOut(auth);
+  }
+});
 </script>
 
 </body>
