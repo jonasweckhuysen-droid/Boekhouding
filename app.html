@@ -12,12 +12,12 @@
 default-src 'self';
 font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com data:;
 style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com;
-script-src 'self' 'unsafe-inline' https://www.gstatic.com https://cdnjs.cloudflare.com;
+script-src 'self' 'unsafe-inline' https://www.gstatic.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net;
 connect-src 'self' https://*.firebaseio.com https://*.googleapis.com;
 ">
 
 <style>
-/* …alles van je originele CSS… */
+/* …originele CSS blijft hier… */
 body{margin:0;font-family:'Poppins',sans-serif;background:linear-gradient(135deg,#dbeafe,#f0f9ff);min-height:100vh;transition:.4s;display:flex;justify-content:center;}
 body.dark{background:linear-gradient(135deg,#020617,#020617);color:white;}
 .container{width:100%;max-width:400px;padding:20px;display:flex;flex-direction:column;gap:20px;box-sizing:border-box;}
@@ -101,10 +101,7 @@ body.dark .themeToggle{background:rgba(30,30,30,0.8);color:white;}
   <button class="btn btn-view" id="manageCategoriesBtn">🗂️ Beheer categorieën</button>
 </div>
 
-<!-- MODALS: modal, dayModal, fixedCostsModal, savingsModal, categoryModal … -->
-<!-- … identiek aan jouw originele HTML … -->
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.min.js"></script>
 <script type="module" src="script.js"></script>
 </body>
 </html>
