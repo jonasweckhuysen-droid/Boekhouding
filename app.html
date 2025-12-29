@@ -2,170 +2,176 @@
 <html lang="nl">
 <head>
 <meta charset="UTF-8">
+<title>💰 Budget Buddy</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Meneige Boekhouding</title>
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+<!-- CSP (Chart + Firebase OK) -->
+<meta http-equiv="Content-Security-Policy"
+content="
+default-src 'self';
+script-src 'self' 'unsafe-inline'
+https://www.gstatic.com
+https://cdnjs.cloudflare.com;
+style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com;
+connect-src 'self'
+https://*.firebaseio.com
+https://*.googleapis.com;
+img-src 'self' data:;
+">
+
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chart.js/4.4.1/chart.umd.min.js"></script>
 
 <style>
-body{
-  margin:0;
-  font-family:'Poppins',sans-serif;
-  background:linear-gradient(135deg,#dbeafe,#f0f9ff);
-  min-height:100vh;
-  display:flex;
-  justify-content:center;
+body {
+  margin: 0;
+  font-family: "Segoe UI", sans-serif;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: #fff;
 }
-.container{
-  width:100%;
-  max-width:420px;
-  padding:20px;
-  display:flex;
-  flex-direction:column;
-  gap:18px;
-}
-header{text-align:center}
-.card{
-  background:white;
-  border-radius:20px;
-  padding:16px;
-  box-shadow:0 8px 20px rgba(0,0,0,.1);
-}
-.actions{display:flex;gap:10px}
-.btn{
-  flex:1;
-  padding:12px;
-  border-radius:14px;
-  border:none;
-  cursor:pointer;
-}
-.add{background:#60a5fa;color:white}
-.cal{background:#fbbf24;color:white}
-.manage{background:#10b981;color:white}
-.save{background:#3b82f6;color:white}
-.cancel{background:#ef4444;color:white}
 
-#calendar{
-  display:none;
-  grid-template-columns:repeat(7,1fr);
-  gap:6px;
+header {
+  padding: 20px;
+  text-align: center;
+  font-size: 1.8em;
+  font-weight: bold;
 }
-.day{
-  background:white;
-  padding:10px;
-  border-radius:12px;
-  text-align:center;
-  cursor:pointer;
-}
-.day.has{border:2px solid #60a5fa}
 
-.modal{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.5);
-  display:none;
-  align-items:center;
-  justify-content:center;
+.container {
+  max-width: 1100px;
+  margin: auto;
+  padding: 20px;
 }
-.box{
-  background:white;
-  width:90%;
-  max-width:360px;
-  padding:20px;
-  border-radius:20px;
-  display:flex;
-  flex-direction:column;
-  gap:10px;
+
+.card {
+  background: rgba(255,255,255,0.15);
+  backdrop-filter: blur(12px);
+  border-radius: 20px;
+  padding: 20px;
+  margin-bottom: 20px;
 }
-input,select{
-  padding:10px;
-  border-radius:10px;
-  border:1px solid #cbd5f5;
+
+h2 {
+  margin-top: 0;
 }
-.entry{display:flex;justify-content:space-between}
-.pos{color:#22c55e}
-.neg{color:#ef4444}
+
+input, select, button {
+  padding: 10px;
+  border-radius: 10px;
+  border: none;
+  margin: 5px 0;
+  width: 100%;
+}
+
+button {
+  background: #34d399;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #22c55e;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit,minmax(250px,1fr));
+  gap: 15px;
+}
+
+.list {
+  margin-top: 10px;
+}
+
+.list-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px;
+  background: rgba(0,0,0,0.2);
+  border-radius: 8px;
+  margin-bottom: 5px;
+}
+
+.progress-box {
+  margin-top: 10px;
+}
+
+progress {
+  width: 100%;
+  height: 20px;
+}
+
+canvas {
+  background: #fff;
+  border-radius: 15px;
+  padding: 10px;
+}
 </style>
 </head>
 
 <body>
 
+<header>💸 Budget Buddy</header>
+
 <div class="container">
 
-<header>
-  <h1>🐷 Meneige Boekhouding</h1>
-</header>
-
+<!-- INKOMST / UITGAVE -->
 <div class="card">
-  <div id="saldo">€ 0,00</div>
-  <div id="expected">🔮 Verwacht einde maand: € 0,00</div>
+<h2>➕ Transactie toevoegen</h2>
+<div class="grid">
+  <select id="type">
+    <option value="inkomst">Inkomst</option>
+    <option value="uitgave">Uitgave</option>
+  </select>
+
+  <input id="bron" placeholder="Van / Naar (vrij invulbaar)">
+  <input id="bedrag" type="number" placeholder="Bedrag (€)">
+  <input id="categorie" placeholder="Categorie">
+</div>
+<button onclick="addTransaction()">Opslaan</button>
 </div>
 
+<!-- VASTE KOSTEN -->
 <div class="card">
-  <strong>Vaste kosten</strong>
-  <div id="fixedCostsList"></div>
-  <button class="btn manage" id="fixedBtn">⚙️ Instellen</button>
+<h2>📌 Vaste kosten</h2>
+<div class="grid">
+  <input id="fixedName" placeholder="Naam (bv. Elektriciteit)">
+  <input id="fixedAmount" type="number" placeholder="Maandelijks bedrag">
+</div>
+<button onclick="addFixedCost()">Toevoegen</button>
+<div id="fixedList" class="list"></div>
 </div>
 
+<!-- SPAARDOELEN -->
 <div class="card">
-  <strong>Spaarpotjes</strong>
-  <div id="savingsList"></div>
-  <button class="btn manage" id="savingsBtn">➕ Beheer</button>
+<h2>🎯 Spaardoelen</h2>
+<div class="grid">
+  <input id="goalName" placeholder="Doel (bv. Reis)">
+  <input id="goalTarget" type="number" placeholder="Doelbedrag">
+</div>
+<button onclick="addGoal()">Toevoegen</button>
+<div id="goalList" class="list"></div>
 </div>
 
-<div class="actions">
-  <button class="btn add" id="addBtn">➕ Toevoegen</button>
-  <button class="btn cal" id="calBtn">📅 Kalender</button>
+<!-- OVERZICHT -->
+<div class="card">
+<h2>📊 Overzicht</h2>
+<p><strong>Verwacht eindsaldo:</strong> €<span id="expectedTotal">0</span></p>
+<div class="progress-box">
+  <progress id="balanceBar" value="0" max="100"></progress>
+</div>
 </div>
 
-<div id="calendar"></div>
-
-<canvas id="chart" height="200"></canvas>
+<!-- GRAFIEK -->
+<div class="card">
+<h2>📈 Uitgaven per categorie</h2>
+<canvas id="chart"></canvas>
+</div>
 
 </div>
 
-<!-- MODALS -->
-
-<div class="modal" id="entryModal">
-  <div class="box">
-    <h3>Nieuwe transactie</h3>
-    <select id="soort">
-      <option value="inkomst">💰 Inkomst</option>
-      <option value="uitgave">💸 Uitgave</option>
-    </select>
-    <input id="bron" placeholder="Bron">
-    <input type="date" id="datum">
-    <input type="number" id="bedrag" placeholder="Bedrag">
-    <select id="saveToSavings"></select>
-    <button class="btn save" id="saveEntry">Opslaan</button>
-    <button class="btn cancel" id="closeEntry">Annuleren</button>
-  </div>
-</div>
-
-<div class="modal" id="fixedModal">
-  <div class="box">
-    <h3>Vaste kosten</h3>
-    <input id="lening" placeholder="Lening">
-    <input id="elek" placeholder="Electriciteit">
-    <input id="mob" placeholder="Mobiliteit">
-    <input id="verz" placeholder="Verzekering">
-    <button class="btn save" id="saveFixed">Opslaan</button>
-    <button class="btn cancel" id="closeFixed">Sluiten</button>
-  </div>
-</div>
-
-<div class="modal" id="savingsModal">
-  <div class="box">
-    <h3>Nieuw spaarpotje</h3>
-    <input id="savName" placeholder="Naam">
-    <input id="savTarget" placeholder="Doelbedrag">
-    <button class="btn save" id="addSaving">Toevoegen</button>
-    <button class="btn cancel" id="closeSavings">Sluiten</button>
-  </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="script.js"></script>
+<script type="module" src="script.js"></script>
 </body>
 </html>
