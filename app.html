@@ -2,289 +2,167 @@
 <html lang="nl">
 <head>
 <meta charset="UTF-8">
-<title>Meneige boekhouding</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meneige Boekhouding</title>
 
-<meta name="theme-color" content="#6366f1">
-<meta name="description" content="Mijn persoonlijke boekhouding">
-
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
 
 <style>
-:root{
-  --bg1:#6366f1;
-  --bg2:#60a5fa;
-  --glass:rgba(255,255,255,.25);
-  --blur:blur(18px);
-  --pos:#22c55e;
-  --neg:#ef4444;
-}
-
-*{box-sizing:border-box}
-
 body{
   margin:0;
-  font-family:Poppins,sans-serif;
+  font-family:'Poppins',sans-serif;
+  background:linear-gradient(135deg,#dbeafe,#f0f9ff);
   min-height:100vh;
-  background:
-    radial-gradient(circle at top, #818cf8, transparent 60%),
-    linear-gradient(135deg,var(--bg1),var(--bg2));
-  color:#0f172a;
+  transition:.4s;
 }
-
-/* HEADER */
-header{
-  padding:30px 20px 10px;
-  text-align:center;
+body.dark{
+  background:linear-gradient(135deg,#020617,#020617);
   color:white;
 }
-header h1{margin:0;font-weight:600}
-
-/* SALDO CARD */
-#saldoCard{
-  margin:20px auto;
-  max-width:360px;
-  background:var(--glass);
-  backdrop-filter:var(--blur);
-  border-radius:22px;
-  padding:22px;
-  box-shadow:0 20px 40px rgba(0,0,0,.25);
-  animation:float 4s ease-in-out infinite;
-}
-#saldoCard p{
-  margin:0;
-  font-size:14px;
-  opacity:.8;
-}
-#saldo{
-  font-size:34px;
-  font-weight:600;
-  margin-top:6px;
-}
-.saldoPositief{color:var(--pos)}
-.saldoNegatief{color:var(--neg)}
-
-@keyframes float{
-  0%,100%{transform:translateY(0)}
-  50%{transform:translateY(-6px)}
-}
-
-/* ACTIONS */
-.actions{
-  display:flex;
-  gap:15px;
+header{
+  text-align:center;
   padding:20px;
 }
-.btn{
-  flex:1;
-  padding:15px;
-  border-radius:16px;
-  border:none;
-  font-size:16px;
-  font-weight:500;
-  cursor:pointer;
-  transition:.3s;
-}
-.btn-add{
+#saldoCard{
   background:white;
+  margin:20px auto;
+  max-width:360px;
+  padding:20px;
+  border-radius:20px;
+  box-shadow:0 10px 25px rgba(0,0,0,.1);
 }
-.btn-view{
-  background:rgba(255,255,255,.3);
-  color:white;
-}
-.btn:hover{transform:scale(1.05)}
-
-/* CALENDAR */
-.calendarWrap{
-  padding:0 20px 90px;
-}
-.calendarHeader{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  color:white;
-  margin-bottom:10px;
-}
-.calendar{
-  display:grid;
-  grid-template-columns:repeat(7,1fr);
-  gap:8px;
-}
-.calendarDay{
-  background:var(--glass);
-  backdrop-filter:var(--blur);
-  border-radius:14px;
-  padding:8px;
-  min-height:60px;
-  color:white;
-  font-size:12px;
-  position:relative;
-}
-.dayNumber{
+body.dark #saldoCard{background:#020617}
+#saldo{
+  font-size:32px;
   font-weight:600;
 }
-.dayAmount{
-  position:absolute;
-  bottom:6px;
-  right:6px;
-  font-size:11px;
+.actions{
+  display:flex;
+  gap:12px;
+  justify-content:center;
 }
-.pos{color:#4ade80}
-.neg{color:#f87171}
+.btn{
+  padding:14px;
+  border-radius:14px;
+  border:none;
+  font-size:16px;
+  cursor:pointer;
+}
+.add{background:#60a5fa;color:white}
+.cal{background:#e0f2fe}
+#calendar{
+  max-width:380px;
+  margin:30px auto;
+  display:grid;
+  grid-template-columns:repeat(7,1fr);
+  gap:6px;
+}
+.day{
+  background:white;
+  padding:10px;
+  border-radius:12px;
+  text-align:center;
+  cursor:pointer;
+  box-shadow:0 4px 10px rgba(0,0,0,.08);
+}
+body.dark .day{background:#020617}
+.day.has{border:2px solid #60a5fa}
 
-/* MODAL */
-#modal{
+#modal,#dayModal{
   position:fixed;
   inset:0;
-  background:rgba(15,23,42,.6);
+  background:rgba(0,0,0,.5);
   display:none;
   align-items:center;
   justify-content:center;
-  z-index:99;
 }
-.modalBox{
+.box{
+  background:white;
   width:90%;
-  max-width:380px;
-  background:white;
-  border-radius:22px;
-  padding:22px;
-  animation:pop .3s ease;
+  max-width:360px;
+  padding:20px;
+  border-radius:20px;
 }
-@keyframes pop{
-  from{transform:scale(.8);opacity:0}
-  to{transform:scale(1);opacity:1}
-}
-.modalBox label{
-  font-size:13px;
-  margin-top:12px;
-  display:block;
-}
-.modalBox input,
-.modalBox select{
-  width:100%;
-  padding:12px;
-  border-radius:14px;
-  border:1px solid #c7d2fe;
-  margin-top:5px;
-  font-family:inherit;
-}
-.modalActions{
-  display:flex;
-  gap:10px;
-  margin-top:20px;
-}
-.cancel{background:#e5e7eb}
-.save{background:#6366f1;color:white}
+body.dark .box{background:#020617}
 
-/* LOGOUT */
-#logoutBtn{
+input,select{
+  width:100%;
+  padding:10px;
+  margin-top:8px;
+  border-radius:10px;
+  border:1px solid #cbd5f5;
+}
+
+.themeToggle{
   position:fixed;
-  bottom:20px;
-  right:20px;
-  width:56px;
-  height:56px;
-  border-radius:50%;
-  border:none;
-  background:white;
-  box-shadow:0 10px 25px rgba(0,0,0,.3);
+  top:15px;
+  right:15px;
+  font-size:22px;
   cursor:pointer;
 }
+
+.entry{
+  display:flex;
+  justify-content:space-between;
+  padding:6px 0;
+}
+.pos{color:#22c55e}
+.neg{color:#ef4444}
 </style>
 </head>
 
 <body>
 
+<div class="themeToggle" onclick="toggleTheme()">🌙</div>
+
 <header>
-  <h1>Meneige boekhouding</h1>
+<h1>Meneige Boekhouding</h1>
 </header>
 
 <div id="saldoCard">
-  <p>Huidig saldo</p>
-  <div id="saldo" class="saldoPositief">€ 0,00</div>
+<p>Huidig saldo</p>
+<div id="saldo">€ 0,00</div>
 </div>
 
 <div class="actions">
-  <button class="btn btn-add" onclick="openModal()">➕ Toevoegen</button>
-  <button class="btn btn-view" onclick="window.location.href='overzicht.html'">📊 Overzicht</button>
+<button class="btn add" onclick="openModal()">➕ Toevoegen</button>
+<button class="btn cal" onclick="buildCalendar()">📅 Kalender</button>
 </div>
 
-<div class="calendarWrap">
-  <div class="calendarHeader">
-    <button onclick="prevMonth()">◀</button>
-    <strong>Kalender</strong>
-    <button onclick="nextMonth()">▶</button>
-  </div>
-  <div id="calendar" class="calendar"></div>
-</div>
+<div id="calendar"></div>
 
-<button id="logoutBtn"><i class="fas fa-sign-out-alt"></i></button>
-
-<!-- MODAL -->
+<!-- MODAL TOEVOEGEN -->
 <div id="modal">
-  <div class="modalBox">
-    <h2>Nieuwe beweging</h2>
+<div class="box">
+<h3>Nieuwe beweging</h3>
 
-    <label>Soort</label>
-    <select id="soort">
-      <option value="inkomst">💰 Inkomst</option>
-      <option value="uitgave">💸 Uitgave</option>
-    </select>
+<select id="soort">
+<option value="inkomst">💰 Inkomst</option>
+<option value="uitgave">💸 Uitgave</option>
+</select>
 
-    <label>Van / Naar</label>
-    <input type="text" id="beschrijving" placeholder="bv. Loon, Colruyt, Brandstof">
+<input id="bron" placeholder="Van / Naar">
+<input type="date" id="datum">
+<input type="number" id="bedrag" placeholder="Bedrag">
 
-    <label>Datum</label>
-    <input type="date" id="datum">
+<label><input type="checkbox" id="recurring"> Maandelijks</label>
 
-    <label>Bedrag</label>
-    <input type="number" id="bedrag" step="0.01">
+<br><br>
+<button class="btn add" onclick="saveEntry()">Opslaan</button>
+<button class="btn" onclick="closeModal()">Annuleren</button>
+</div>
+</div>
 
-    <label>
-      <input type="checkbox" id="recurring"> Maandelijks terugkerend
-    </label>
-
-    <div class="modalActions">
-      <button class="btn cancel" onclick="closeModal()">Annuleren</button>
-      <button class="btn save" onclick="saveEntry()">Opslaan</button>
-    </div>
-  </div>
+<!-- DAGDETAIL -->
+<div id="dayModal">
+<div class="box">
+<h3 id="dayTitle"></h3>
+<div id="dayList"></div>
+<button class="btn" onclick="closeDay()">Sluiten</button>
+</div>
 </div>
 
 <script src="script.js"></script>
-
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyAkBAw17gNU_EBhn8dKgyY5qv-ecfWaG2s",
-  authDomain: "finance-jonas.firebaseapp.com",
-  projectId: "finance-jonas",
-  storageBucket: "finance-jonas.firebasestorage.app",
-  messagingSenderId: "497182804753",
-  appId: "1:497182804753:web:ea942a578dd1c15f631ab0"
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const ALLOWED_EMAIL = "jonasweckhuysen@gmail.com";
-
-onAuthStateChanged(auth, user=>{
-  if(!user || user.email!==ALLOWED_EMAIL){
-    location.href="index.html";
-  }
-});
-
-document.getElementById("logoutBtn").onclick=()=>{
-  signOut(auth).then(()=>location.href="index.html");
-};
-</script>
-
-<script>
-function openModal(){modal.style.display="flex"}
-function closeModal(){modal.style.display="none"}
-</script>
-
 </body>
 </html>
