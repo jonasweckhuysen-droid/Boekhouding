@@ -88,6 +88,11 @@ async function loadData(){
       uitgavenDezeMaand += Math.abs(e.bedrag);
     }
   });
+  document.getElementById("saldo").innerText = "€ "+saldo.toFixed(2).replace(".",",");
+updateBudgetUI(uitgavenDezeMaand);
+updateFixedCostsUI();
+updateSaldoUI(saldo);
+
 
   window.items = items; // Sla items op voor kalender
 
