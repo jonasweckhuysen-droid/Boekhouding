@@ -1,105 +1,91 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, collection, addDoc, getDocs, query } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+document.addEventListener("DOMContentLoaded", () => {
 
-// Firebase
-const firebaseConfig = {
-  apiKey: "AIzaSyAkBAw17gNU_EBhn8dKgyY5qv-ecfWaG2s",
-  authDomain: "finance-jonas.firebaseapp.com",
-  projectId: "finance-jonas",
-  storageBucket: "finance-jonas.firebasestorage.app",
-  messagingSenderId: "497182804753",
-  appId: "1:497182804753:web:ea942a578dd1c15f631ab0",
-  measurementId: "G-0J29T1Z7MV"
-};
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-const provider = new GoogleAuthProvider();
-window.db = db;
+  const addBtn = document.getElementById("addBtn");
+  const calBtn = document.getElementById("calBtn");
+  const modal = document.getElementById("modal");
+  const closeModalBtn = document.getElementById("closeModalBtn");
+  const saveEntryBtn = document.getElementById("saveEntryBtn");
 
-// DOM elements
-const saldoDiv = document.getElementById("saldo");
-const saldoBar = document.getElementById("saldoBar");
-const expectedEndDiv = document.getElementById("expectedEnd");
-const saveToSavings = document.getElementById("saveToSavings");
+  const soort = document.getElementById("soort");
+  const bron = document.getElementById("bron");
+  const datum = document.getElementById("datum");
+  const bedrag = document.getElementById("bedrag");
 
-// --- Categorieën
-function getCategoryMap(){ return JSON.parse(localStorage.getItem("categoryMap"))||{"Albert Heijn":"Boodschappen"}; }
-function saveCategoryMap(map){ localStorage.setItem("categoryMap",JSON.stringify(map)); }
-function addCategory(bron,cat){ if(!bron||!cat) return; const map=getCategoryMap(); map[bron]=cat; saveCategoryMap(map); updateCategoryListUI(); updateBronAutocomplete();}
-function deleteCategory(bron){ const map=getCategoryMap(); delete map[bron]; saveCategoryMap(map); updateCategoryListUI(); updateBronAutocomplete();}
-function updateCategoryListUI(){ const map=getCategoryMap(); const listDiv=document.getElementById("categoryList"); if(!listDiv) return; listDiv.innerHTML=""; Object.entries(map).forEach(([b,c])=>{const div=document.createElement("div"); div.style.display="flex"; div.style.justifyContent="space-between"; div.style.margin="4px 0"; div.innerHTML=`<span>${b} → ${c}</span> <button class="btn cancel" style="padding:2px 6px;font-size:12px;">❌</button>`; div.querySelector("button").addEventListener("click",()=>deleteCategory(b)); listDiv.appendChild(div);}); }
-function updateBronAutocomplete(){ const map=getCategoryMap(); const datalist=document.getElementById("bronList"); if(!datalist) return; datalist.innerHTML=""; Object.keys(map).forEach(b=>{const opt=document.createElement("option"); opt.value=b; datalist.appendChild(opt);});}
+  const saldoDiv = document.getElementById("saldo");
+  const expectedDiv = document.getElementById("expected");
+  const calendar = document.getElementById("calendar");
 
-// --- Auth
-onAuthStateChanged(auth,user=>{
-    if(!user){
-        signInWithPopup(auth,provider).then(r=>{window.user=r.user; loadData();}).catch(e=>console.error(e));
-    } else { window.user=user; loadData(); }
-});
+  let items = JSON.parse(localStorage.getItem("items")) || [];
 
-// --- Spaarpotten
-function getSavings(){return JSON.parse(localStorage.getItem("savings"))||[];}
-function saveSavingsToStorage(s){localStorage.setItem("savings",JSON.stringify(s));}
-function updateSavingsUI(){ 
-    if(!saveToSavings) return;
-    const savings=getSavings(); 
-    saveToSavings.innerHTML="";
-    const defaultOpt=document.createElement("option"); defaultOpt.value=""; defaultOpt.innerText="Geen spaarpot"; saveToSavings.appendChild(defaultOpt);
-    savings.forEach((s,i)=>{const opt=document.createElement("option"); opt.value=i; opt.innerText=`${s.name}: € ${s.amount.toFixed(2)}`; saveToSavings.appendChild(opt); });
-}
+  function saveItems(){
+    localStorage.setItem("items", JSON.stringify(items));
+  }
 
-// --- Save Entry
-async function saveEntry(){
-    const soortVal=soort.value, bronVal=bron.value, datumVal=datum.value;
-    let bedragVal=parseFloat(bedrag.value);
-    if(isNaN(bedragVal)){ alert("Vul een geldig bedrag in"); return; }
-    const recurringVal=recurring.checked;
-    const savingsIndex = saveToSavings?.value;
-    const categorie = getCategoryMap()[bronVal] || "Overig";
-    const savings = getSavings();
+  function updateSaldo(){
+    const saldo = items.reduce((s,i)=>s+i.bedrag,0);
+    saldoDiv.innerText = `€ ${saldo.toFixed(2)}`;
+    expectedDiv.innerText = `🔮 Verwacht einde maand: € ${(saldo).toFixed(2)}`;
+  }
 
-    // Spaarpotten logica
-    if(savingsIndex!=="" && savings[savingsIndex]){
-        const sIndex=parseInt(savingsIndex);
-        if(soortVal==="inkomst"){ savings[sIndex].amount += bedragVal; saveSavingsToStorage(savings); updateSavingsUI(); bedragVal=0; }
-        else{ 
-            const spaarBedrag = Math.min(bedragVal, savings[sIndex].amount); 
-            savings[sIndex].amount -= spaarBedrag; 
-            saveSavingsToStorage(savings); 
-            updateSavingsUI(); 
-            bedragVal -= spaarBedrag; 
-        }
+  function renderCalendar(){
+    calendar.innerHTML="";
+    const now = new Date();
+    const days = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
+
+    for(let d=1; d<=days; d++){
+      const div = document.createElement("div");
+      div.className="day";
+      div.innerText=d;
+
+      const dayItems = items.filter(i=>{
+        const dt=new Date(i.datum);
+        return dt.getDate()===d && dt.getMonth()===now.getMonth();
+      });
+
+      if(dayItems.length) div.classList.add("has");
+
+      div.addEventListener("click",()=>{
+        alert(
+          dayItems.map(i =>
+            `${i.soort==="inkomst"?"💰":"💸"} ${i.bron}: € ${Math.abs(i.bedrag).toFixed(2)}`
+          ).join("\n") || "Geen transacties"
+        );
+      });
+
+      calendar.appendChild(div);
     }
+  }
 
-    if(soortVal==="uitgave") bedragVal=-Math.abs(bedragVal);
+  // EVENTS
+  addBtn.onclick = () => modal.style.display="flex";
+  closeModalBtn.onclick = () => modal.style.display="none";
 
-    await addDoc(collection(db,"users",user.uid,"items"),{
-        soort:soortVal,
-        bron:bronVal,
-        datum:datumVal,
-        bedrag:bedragVal,
-        categorie:categorie,
-        recurring:recurringVal,
-        savingsIndex:savingsIndex!==""?parseInt(savingsIndex):null,
-        created:Date.now()
+  saveEntryBtn.onclick = () => {
+    const val = parseFloat(bedrag.value);
+    if(isNaN(val)){ alert("Vul een geldig bedrag in"); return; }
+
+    items.push({
+      soort: soort.value,
+      bron: bron.value,
+      datum: datum.value,
+      bedrag: soort.value==="uitgave" ? -Math.abs(val) : val
     });
 
-    closeModal();
-    loadData();
-}
+    saveItems();
+    updateSaldo();
+    renderCalendar();
 
-// --- LoadData
-async function loadData(){
-    const q=query(collection(db,"users",user.uid,"items"));
-    const snapshot = await getDocs(q);
-    const items = snapshot.docs.map(d=>d.data());
+    modal.style.display="none";
+    bron.value = bedrag.value = "";
+  };
 
-    const saldo = items.reduce((sum,i)=>sum+i.bedrag,0);
-    saldoDiv.innerText = `€ ${saldo.toFixed(2)}`;
-    saldoBar.style.width = `${Math.min(100, Math.abs(saldo)/1000*100)}%`;
-    expectedEndDiv.innerText = `🔮 Verwacht einde maand: € ${saldo.toFixed(2)}`;
+  calBtn.onclick = () => {
+    calendar.style.display = calendar.style.display==="grid"?"none":"grid";
+    renderCalendar();
+  };
 
-    renderCalendar(items);
-}
+  // INIT
+  updateSaldo();
+  renderCalendar();
+
+});
