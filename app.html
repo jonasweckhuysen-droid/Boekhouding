@@ -196,6 +196,24 @@ body.dark .themeToggle{background:rgba(30,30,30,0.8);color:white;}
   </div>
 </div>
 
+<!-- Voeg dit net boven </body> toe, naast de andere modals -->
+<div id="categoryModal">
+  <div class="box">
+    <h3>Categoriebeheer</h3>
+    <div id="categoryList"></div>
+    <input type="text" id="newBron" placeholder="Bron (bijv. Digi)">
+    <input type="text" id="newCategorie" placeholder="Categorie (bijv. Telecom)">
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:10px;">
+      <button class="btn save" id="addCategoryBtn">Toevoegen</button>
+      <button class="btn cancel" id="closeCategoryBtn">Sluiten</button>
+    </div>
+  </div>
+</div>
+
+<!-- Voeg een knop toe ergens in de container om categoriebeheer te openen -->
+<button class="btn btn-view" id="manageCategoriesBtn">🗂️ Beheer categorieën</button>
+
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script type="module" src="script.js"></script>
 </body>
