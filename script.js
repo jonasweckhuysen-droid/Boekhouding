@@ -1,4 +1,6 @@
 let db;
+let currentMonth = new Date().getMonth();
+let currentYear = new Date().getFullYear();
 
 // =====================
 // DATABASE
@@ -9,10 +11,7 @@ request.onupgradeneeded = function (event) {
   db = event.target.result;
 
   if (!db.objectStoreNames.contains("boekhouding")) {
-    db.createObjectStore("boekhouding", {
-      keyPath: "id",
-      autoIncrement: true
-    });
+    db.createObjectStore("boekhouding", { keyPath: "id", autoIncrement: true });
   }
 };
 
@@ -20,67 +19,72 @@ request.onsuccess = function (event) {
   db = event.target.result;
   applyRecurring();
   loadData();
+  renderCalendar(currentYear, currentMonth);
 };
 
 request.onerror = function () {
-  console.error("❌ IndexedDB kon niet geopend worden");
+  console.error("IndexedDB kon niet geopend worden");
 };
 
 // =====================
 // MODAL
 // =====================
 function openModal() {
-  document.getElementById("modal").style.display = "flex";
+  const modal = document.getElementById("modal");
+  modal.classList.remove("modalHidden");
+  modal.classList.add("modalShow");
 }
 
 function closeModal() {
-  document.getElementById("modal").style.display = "none";
-  clearForm();
+  const modal = document.getElementById("modal");
+  modal.classList.remove("modalShow");
+  modal.classList.add("modalHidden");
 }
 
 // =====================
 // OPSLAAN
 // =====================
 function saveEntry() {
-  if (!db) { alert("Database wordt nog geladen..."); return; }
+  if (!db) return;
 
   const soort = document.getElementById("soort").value;
-  const bron = document.getElementById("bron").value.trim();
   const datum = document.getElementById("datum").value;
   const bedragRaw = parseFloat(document.getElementById("bedrag").value);
+  const beschrijving = document.getElementById("beschrijving").value.trim();
   const recurring = document.getElementById("recurring").checked;
 
-  if (!datum || isNaN(bedragRaw) || bron === "") {
-    alert("Gelieve alle velden correct in te vullen");
+  if (!datum || isNaN(bedragRaw) || !beschrijving) {
+    alert("Vul alles correct in 🙂");
     return;
   }
 
-  const bedrag = soort === "uitgave" ? -Math.abs(bedragRaw) : Math.abs(bedragRaw);
+  const bedrag =
+    soort === "uitgave"
+      ? -Math.abs(bedragRaw)
+      : Math.abs(bedragRaw);
 
-  const entry = { soort, bron, datum, bedrag, recurring };
+  const entry = {
+    soort,
+    datum,
+    bedrag,
+    beschrijving,
+    recurring
+  };
 
   const transaction = db.transaction(["boekhouding"], "readwrite");
   const store = transaction.objectStore("boekhouding");
   store.add(entry);
 
-  transaction.oncomplete = function () {
+  transaction.oncomplete = () => {
     closeModal();
+    animatePulse("saldo");
     loadData();
+    renderCalendar(currentYear, currentMonth);
   };
 }
 
 // =====================
-// FORM RESET
-// =====================
-function clearForm() {
-  document.getElementById("bron").value = "";
-  document.getElementById("datum").value = "";
-  document.getElementById("bedrag").value = "";
-  document.getElementById("recurring").checked = false;
-}
-
-// =====================
-// SALDO & ENTRIES TONEN
+// DATA LADEN
 // =====================
 function loadData() {
   if (!db) return;
@@ -89,62 +93,103 @@ function loadData() {
   const store = transaction.objectStore("boekhouding");
   const request = store.getAll();
 
-  request.onsuccess = function () {
+  request.onsuccess = () => {
     const data = request.result;
     updateSaldo(data);
-    showEntries(data);
   };
 }
 
+// =====================
+// SALDO
+// =====================
 function updateSaldo(data) {
   let total = 0;
   data.forEach(e => total += e.bedrag);
-  document.getElementById("saldoBox").innerText = "€ " + total.toFixed(2).replace(".", ",");
-}
 
-function showEntries(entries) {
-  const container = document.getElementById("entriesList");
-  container.innerHTML = "";
+  const saldoEl = document.getElementById("saldo");
+  saldoEl.innerText = "€ " + total.toFixed(2).replace(".", ",");
 
-  entries.forEach(e => {
-    const div = document.createElement("div");
-    div.className = `entry ${e.soort}`;
-    div.innerHTML = `
-      <span>${e.datum} • ${e.bron} • € ${Math.abs(e.bedrag).toFixed(2).replace(".", ",")}</span>
-      <button onclick="deleteEntry(${e.id})"><i class="fas fa-trash"></i></button>
-    `;
-    container.appendChild(div);
-  });
+  saldoEl.classList.toggle("saldoPositief", total >= 0);
+  saldoEl.classList.toggle("saldoNegatief", total < 0);
 }
 
 // =====================
-// DELETE ENTRY
+// KALENDER
 // =====================
-function deleteEntry(id) {
-  const transaction = db.transaction(["boekhouding"], "readwrite");
-  const store = transaction.objectStore("boekhouding");
-  store.delete(id);
-  transaction.oncomplete = loadData;
-}
+function renderCalendar(year, month) {
+  if (!db) return;
 
-// =====================
-// FILTER / SEARCH
-// =====================
-function filterEntries() {
-  const query = document.getElementById("search").value.toLowerCase();
+  const calendar = document.getElementById("calendar");
+  calendar.innerHTML = "";
+
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  for (let i = 0; i < firstDay; i++) {
+    calendar.appendChild(document.createElement("div"));
+  }
+
   const transaction = db.transaction(["boekhouding"], "readonly");
   const store = transaction.objectStore("boekhouding");
   const request = store.getAll();
 
-  request.onsuccess = function () {
-    const filtered = request.result.filter(e => e.bron.toLowerCase().includes(query));
-    showEntries(filtered);
-    updateSaldo(filtered);
+  request.onsuccess = () => {
+    const entries = request.result;
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      const cell = document.createElement("div");
+      cell.className = "calendarDay";
+
+      const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+      const dayEntries = entries.filter(e => e.datum === dateStr);
+
+      let dayTotal = 0;
+      dayEntries.forEach(e => dayTotal += e.bedrag);
+
+      cell.innerHTML = `
+        <span class="dayNumber">${day}</span>
+        ${dayTotal !== 0 ? `<span class="dayAmount ${dayTotal < 0 ? "neg" : "pos"}">
+          € ${dayTotal.toFixed(0)}
+        </span>` : ""}
+      `;
+
+      calendar.appendChild(cell);
+    }
   };
 }
 
 // =====================
-// TERUGKERENDE KOSTEN
+// MAAND NAVIGATIE
+// =====================
+function prevMonth() {
+  currentMonth--;
+  if (currentMonth < 0) {
+    currentMonth = 11;
+    currentYear--;
+  }
+  renderCalendar(currentYear, currentMonth);
+}
+
+function nextMonth() {
+  currentMonth++;
+  if (currentMonth > 11) {
+    currentMonth = 0;
+    currentYear++;
+  }
+  renderCalendar(currentYear, currentMonth);
+}
+
+// =====================
+// ANIMATIES
+// =====================
+function animatePulse(id) {
+  const el = document.getElementById(id);
+  el.classList.add("pulse");
+  setTimeout(() => el.classList.remove("pulse"), 400);
+}
+
+// =====================
+// TERUGKEREND
 // =====================
 function applyRecurring() {
   if (!db) return;
@@ -153,32 +198,30 @@ function applyRecurring() {
   const store = transaction.objectStore("boekhouding");
   const request = store.getAll();
 
-  request.onsuccess = function () {
+  request.onsuccess = () => {
     const entries = request.result;
     const now = new Date();
-    let newEntries = [];
 
     entries.forEach(entry => {
-      if (entry.recurring) {
-        let lastDate = new Date(entry.datum);
+      if (!entry.recurring) return;
 
-        while (
-          lastDate.getFullYear() < now.getFullYear() ||
-          (lastDate.getFullYear() === now.getFullYear() && lastDate.getMonth() < now.getMonth())
-        ) {
-          lastDate.setMonth(lastDate.getMonth() + 1);
+      let last = new Date(entry.datum);
 
-          newEntries.push({
-            soort: entry.soort,
-            bron: entry.bron,
-            datum: lastDate.toISOString().split("T")[0],
-            bedrag: entry.bedrag,
-            recurring: true
-          });
-        }
+      while (
+        last.getFullYear() < now.getFullYear() ||
+        (last.getFullYear() === now.getFullYear() &&
+          last.getMonth() < now.getMonth())
+      ) {
+        last.setMonth(last.getMonth() + 1);
+
+        store.add({
+          soort: entry.soort,
+          datum: last.toISOString().split("T")[0],
+          bedrag: entry.bedrag,
+          beschrijving: entry.beschrijving,
+          recurring: true
+        });
       }
     });
-
-    newEntries.forEach(e => store.add(e));
   };
 }
