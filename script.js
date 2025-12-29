@@ -117,3 +117,101 @@ export function updateBudgetUI(spent=0){
 export function toggleTheme(){
   document.body.classList.toggle("dark");
 }
+// --------------------
+// CALENDAR
+// --------------------
+export function buildCalendar(){
+  const calendar = document.getElementById("calendar");
+  calendar.innerHTML = "";
+
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+
+  // eerste dag van de maand
+  const firstDay = new Date(year, month, 1).getDay();
+  const lastDate = new Date(year, month+1, 0).getDate();
+
+  // lege dagen voor start van de maand
+  for(let i=0;i<firstDay;i++){
+    const empty = document.createElement("div");
+    calendar.appendChild(empty);
+  }
+
+  // echte dagen
+  for(let d=1;d<=lastDate;d++){
+    const dayDiv = document.createElement("div");
+    dayDiv.classList.add("day");
+    dayDiv.innerText = d;
+
+    dayDiv.addEventListener("click", ()=>openDayModal(year, month, d));
+
+    calendar.appendChild(dayDiv);
+  }
+
+  // markeer dagen met bewegingen
+  markDaysWithEntries(year, month);
+}
+
+// --------------------
+// MARK DAYS WITH ENTRIES
+// --------------------
+async function markDaysWithEntries(year, month){
+  const calendar = document.getElementById("calendar");
+  const q = query(collection(window.db, "users", window.user.uid, "items"));
+  const snap = await getDocs(q);
+
+  const daysWithEntries = new Set();
+
+  snap.forEach(doc=>{
+    const e = doc.data();
+    const d = new Date(e.datum);
+    if(d.getFullYear()===year && d.getMonth()===month){
+      daysWithEntries.add(d.getDate());
+    }
+  });
+
+  // markeer
+  const dayDivs = calendar.getElementsByClassName("day");
+  for(const div of dayDivs){
+    const dayNum = parseInt(div.innerText);
+    if(daysWithEntries.has(dayNum)){
+      div.classList.add("has");
+    }
+  }
+}
+
+// --------------------
+// DAG MODAL
+// --------------------
+export async function openDayModal(year, month, day){
+  const dayTitle = document.getElementById("dayTitle");
+  const dayList = document.getElementById("dayList");
+
+  dayTitle.innerText = `Bewegingen ${day}-${month+1}-${year}`;
+  dayList.innerHTML = "";
+
+  const q = query(collection(window.db, "users", window.user.uid, "items"));
+  const snap = await getDocs(q);
+
+  snap.forEach(doc=>{
+    const e = doc.data();
+    const d = new Date(e.datum);
+    if(d.getFullYear()===year && d.getMonth()===month && d.getDate()===day){
+      const div = document.createElement("div");
+      div.classList.add("entry");
+      div.innerHTML = `
+        <span>${e.soort==="inkomst"?"💰":"💸"} ${e.bron}</span>
+        <span class="${e.bedrag>0?"pos":"neg"}">€ ${Math.abs(e.bedrag).toFixed(2).replace(".",",")}</span>
+      `;
+      dayList.appendChild(div);
+    }
+  });
+
+  document.getElementById("dayModal").style.display="flex";
+}
+
+export function closeDay(){
+  document.getElementById("dayModal").style.display="none";
+}
+
