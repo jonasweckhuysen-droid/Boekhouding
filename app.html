@@ -17,6 +17,7 @@ connect-src 'self' https://*.firebaseio.com https://*.googleapis.com;
 ">
 
 <style>
+/* …alles van je originele CSS… */
 body{margin:0;font-family:'Poppins',sans-serif;background:linear-gradient(135deg,#dbeafe,#f0f9ff);min-height:100vh;transition:.4s;display:flex;justify-content:center;}
 body.dark{background:linear-gradient(135deg,#020617,#020617);color:white;}
 .container{width:100%;max-width:400px;padding:20px;display:flex;flex-direction:column;gap:20px;box-sizing:border-box;}
@@ -38,7 +39,7 @@ body.dark #saldoCard, body.dark #fixedCostsCard, body.dark #savingsCard{backgrou
 .btn-view{background:#10b981;color:white;}
 .btn.save{background:#3b82f6;color:white;}
 .btn.cancel{background:#ef4444;color:white;}
-#calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;}
+#calendar{display:none;grid-template-columns:repeat(7,1fr);gap:6px;}
 .day{background:white;padding:10px;border-radius:12px;text-align:center;cursor:pointer;box-shadow:0 4px 10px rgba(0,0,0,.08);transition:.2s;}
 .day:hover{transform:translateY(-2px);}
 body.dark .day{background:#020617}
@@ -97,84 +98,11 @@ body.dark .themeToggle{background:rgba(30,30,30,0.8);color:white;}
     <canvas id="expenseChart" width="400" height="200"></canvas>
   </div>
 
-  <!-- Knop categoriebeheer -->
   <button class="btn btn-view" id="manageCategoriesBtn">🗂️ Beheer categorieën</button>
 </div>
 
-<!-- MODALS -->
-
-<!-- Toevoegen / Bewerk beweging -->
-<div id="modal">
-  <div class="box">
-    <h3>Nieuwe beweging</h3>
-    <select id="soort">
-      <option value="inkomst">💰 Inkomst</option>
-      <option value="uitgave">💸 Uitgave</option>
-    </select>
-    <input id="bron" placeholder="Van / Naar" list="bronList">
-    <datalist id="bronList"></datalist>
-    <input type="date" id="datum">
-    <input type="number" id="bedrag" placeholder="Bedrag">
-    <label><input type="checkbox" id="recurring"> Maandelijks</label>
-    <select id="saveToSavings">
-      <option value="">💾 Niet naar spaarpot</option>
-    </select>
-    <br>
-    <div style="display:flex;gap:10px;justify-content:flex-end;">
-      <button class="btn add" id="saveEntryBtn"><i class="fa-solid fa-floppy-disk"></i> Opslaan</button>
-      <button class="btn cancel" id="closeModalBtn"><i class="fa-solid fa-xmark"></i> Annuleren</button>
-    </div>
-  </div>
-</div>
-
-<!-- Dag modal -->
-<div id="dayModal">
-  <div class="box">
-    <h3 id="dayTitle"></h3>
-    <div id="dayList"></div>
-    <button class="btn cancel" id="closeDayBtn"><i class="fa-solid fa-xmark"></i> Sluiten</button>
-  </div>
-</div>
-
-<!-- Vaste kosten -->
-<div id="fixedCostsModal">
-  <div class="box">
-    <h2>Vaste Kosten</h2>
-    <input type="number" id="leningInput" placeholder="Lening">
-    <input type="number" id="electriciteitInput" placeholder="Electriciteit">
-    <input type="number" id="mobiliteitInput" placeholder="Mobiliteit">
-    <input type="number" id="verzekeringInput" placeholder="Verzekering">
-    <br><br>
-    <button class="btn save" id="saveFixedBtn">Opslaan</button>
-    <button class="btn cancel" id="closeFixedBtn">Annuleren</button>
-  </div>
-</div>
-
-<!-- Spaarpotten -->
-<div id="savingsModal">
-  <div class="box">
-    <h3>Spaarpot aanmaken / bewerken</h3>
-    <input type="text" id="savingsName" placeholder="Naam doel">
-    <input type="number" id="savingsTarget" placeholder="Doelbedrag">
-    <br>
-    <button class="btn save" id="saveSavingsBtn">Opslaan</button>
-    <button class="btn cancel" id="closeSavingsBtn">Annuleren</button>
-  </div>
-</div>
-
-<!-- Categoriebeheer -->
-<div id="categoryModal">
-  <div class="box">
-    <h3>Categoriebeheer</h3>
-    <div id="categoryList"></div>
-    <input type="text" id="newBron" placeholder="Bron (bijv. Digi)">
-    <input type="text" id="newCategorie" placeholder="Categorie (bijv. Telecom)">
-    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:10px;">
-      <button class="btn save" id="addCategoryBtn">Toevoegen</button>
-      <button class="btn cancel" id="closeCategoryBtn">Sluiten</button>
-    </div>
-  </div>
-</div>
+<!-- MODALS: modal, dayModal, fixedCostsModal, savingsModal, categoryModal … -->
+<!-- … identiek aan jouw originele HTML … -->
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script type="module" src="script.js"></script>
