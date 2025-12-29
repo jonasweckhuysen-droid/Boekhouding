@@ -5,48 +5,90 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Meneige Boekhouding</title>
 
+<!-- Font Awesome & Google Fonts -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
 <!-- Content Security Policy -->
 <meta http-equiv="Content-Security-Policy" content="
   default-src 'self';
-  font-src 'self' data:;
-  style-src 'self' 'unsafe-inline';
-  script-src 'self' https://www.gstatic.com;
+  font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com data:;
+  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com;
+  script-src 'self' 'unsafe-inline' https://www.gstatic.com https://cdnjs.cloudflare.com;
   connect-src 'self' https://*.firebaseio.com https://*.googleapis.com;
 ">
 
 <style>
-/* Systeemfont i.p.v. Google Fonts */
 body{
   margin:0;
-  font-family: Arial, sans-serif;
+  font-family:'Poppins',sans-serif;
   background:linear-gradient(135deg,#dbeafe,#f0f9ff);
   min-height:100vh;
   transition:.4s;
 }
 body.dark{background:linear-gradient(135deg,#020617,#020617);color:white;}
+
 header{text-align:center;padding:20px;}
-#saldoCard{background:white;margin:20px auto;max-width:360px;padding:20px;border-radius:20px;box-shadow:0 10px 25px rgba(0,0,0,.1);}
+#saldoCard{
+  background:white;margin:20px auto;max-width:360px;padding:20px;
+  border-radius:20px;box-shadow:0 10px 25px rgba(0,0,0,.1);
+  display:flex;flex-direction:column;align-items:center;
+}
 body.dark #saldoCard{background:#020617}
-#saldo{font-size:32px;font-weight:600;}
-.actions{display:flex;gap:12px;justify-content:center;}
-.btn{padding:14px;border-radius:14px;border:none;font-size:16px;cursor:pointer;}
-.add{background:#60a5fa;color:white}
-.cal{background:#e0f2fe}
+
+#saldo{font-size:32px;font-weight:600;margin-top:6px;}
+#saldoCard i{font-size:24px;color:#60a5fa;}
+
+.actions{display:flex;gap:12px;justify-content:center;margin:20px 0;}
+.btn{
+  padding:12px 18px;border-radius:14px;border:none;font-size:16px;cursor:pointer;
+  display:flex;align-items:center;gap:8px;transition:.2s;
+}
+.btn:hover{opacity:.85;}
+.add{background:#60a5fa;color:white;}
+.cal{background:#fbbf24;color:white;}
+.btn-view{background:#10b981;color:white;}
+.btn.save{background:#3b82f6;color:white;}
+.btn.cancel{background:#ef4444;color:white;}
+
 #calendar{max-width:380px;margin:30px auto;display:grid;grid-template-columns:repeat(7,1fr);gap:6px;}
-.day{background:white;padding:10px;border-radius:12px;text-align:center;cursor:pointer;box-shadow:0 4px 10px rgba(0,0,0,.08);}
+.day{
+  background:white;padding:10px;border-radius:12px;text-align:center;
+  cursor:pointer;box-shadow:0 4px 10px rgba(0,0,0,.08);transition:.2s;
+}
+.day:hover{transform:translateY(-2px);}
 body.dark .day{background:#020617}
 .day.has{border:2px solid #60a5fa}
 
-#modal,#dayModal,#budgetModal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;}
-.box{background:white;width:90%;max-width:360px;padding:20px;border-radius:20px;}
+#modal,#dayModal,#budgetModal{
+  position:fixed;inset:0;background:rgba(0,0,0,.5);
+  display:none;align-items:center;justify-content:center;
+}
+.box{
+  background:white;width:90%;max-width:360px;padding:20px;border-radius:20px;
+  display:flex;flex-direction:column;gap:10px;
+}
 body.dark .box{background:#020617}
 
 input,select{width:100%;padding:10px;margin-top:8px;border-radius:10px;border:1px solid #cbd5f5;}
 
-.themeToggle{position:fixed;top:15px;right:15px;font-size:22px;cursor:pointer;}
+.themeToggle{
+  position:fixed;top:15px;right:15px;font-size:24px;cursor:pointer;
+  background:rgba(255,255,255,0.9);padding:8px;border-radius:50%;
+  transition:.3s;
+}
+.themeToggle:hover{background:rgba(255,255,255,1);}
+body.dark .themeToggle{background:rgba(30,30,30,0.8);color:white;}
+
 .entry{display:flex;justify-content:space-between;padding:6px 0;}
-.pos{color:#22c55e}
-.neg{color:#ef4444}
+.pos{color:#22c55e;font-weight:500;}
+.neg{color:#ef4444;font-weight:500;}
+
+#budgetWarning{
+  display:none;max-width:360px;margin:10px auto;padding:14px;
+  border-radius:14px;text-align:center;font-weight:500;
+  transition:.3s;
+}
 </style>
 </head>
 
@@ -54,29 +96,31 @@ input,select{width:100%;padding:10px;margin-top:8px;border-radius:10px;border:1p
 
 <div class="themeToggle" id="themeToggle">🌙</div>
 
-<header><h1>Meneige Boekhouding</h1></header>
+<header>
+  <h1>Meneige Boekhouding <i class="fa-solid fa-piggy-bank"></i></h1>
+</header>
 
 <div id="saldoCard">
-  <p>Huidig saldo</p>
+  <i class="fa-solid fa-wallet"></i>
   <div id="saldo">€ 0,00</div>
 </div>
 
-<div id="budgetCard" style="max-width:360px;margin:10px auto;background:white;padding:16px;border-radius:18px;box-shadow:0 6px 18px rgba(0,0,0,.1);">
+<div id="budgetCard">
   <p>Maandelijks budget</p>
   <strong id="budgetAmount">Niet ingesteld</strong><br><br>
-  <button class="btn btn-view" id="budgetBtn">⚙️ Budget instellen</button>
+  <button class="btn btn-view" id="budgetBtn"><i class="fa-solid fa-gear"></i> Budget instellen</button>
 </div>
 
-<div id="budgetWarning" style="display:none;max-width:360px;margin:10px auto;padding:14px;border-radius:14px;text-align:center;font-weight:500;"></div>
+<div id="budgetWarning"></div>
 
 <div class="actions">
-  <button class="btn add" id="addBtn">➕ Toevoegen</button>
-  <button class="btn cal" id="calBtn">📅 Kalender</button>
+  <button class="btn add" id="addBtn"><i class="fa-solid fa-plus"></i> Toevoegen</button>
+  <button class="btn cal" id="calBtn"><i class="fa-solid fa-calendar-days"></i> Kalender</button>
 </div>
 
 <div id="calendar"></div>
 
-<!-- MODALS -->
+<!-- MODAL TOEVOEGEN -->
 <div id="modal">
   <div class="box">
     <h3>Nieuwe beweging</h3>
@@ -88,32 +132,90 @@ input,select{width:100%;padding:10px;margin-top:8px;border-radius:10px;border:1p
     <input type="date" id="datum">
     <input type="number" id="bedrag" placeholder="Bedrag">
     <label><input type="checkbox" id="recurring"> Maandelijks</label>
-    <br><br>
-    <button class="btn add" id="saveEntryBtn">Opslaan</button>
-    <button class="btn" id="closeModalBtn">Annuleren</button>
+    <br>
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn add" id="saveEntryBtn"><i class="fa-solid fa-floppy-disk"></i> Opslaan</button>
+      <button class="btn cancel" id="closeModalBtn"><i class="fa-solid fa-xmark"></i> Annuleren</button>
+    </div>
   </div>
 </div>
 
+<!-- DAGDETAIL -->
 <div id="dayModal">
   <div class="box">
     <h3 id="dayTitle"></h3>
     <div id="dayList"></div>
-    <button class="btn" id="closeDayBtn">Sluiten</button>
+    <button class="btn cancel" id="closeDayBtn"><i class="fa-solid fa-xmark"></i> Sluiten</button>
   </div>
 </div>
 
+<!-- BUDGET MODAL -->
 <div id="budgetModal">
   <div class="box">
     <h2>Maandelijks budget</h2>
     <input type="number" id="budgetInput" placeholder="Bijv. 1500">
-    <br><br>
-    <button class="btn save" id="saveBudgetBtn">Opslaan</button>
-    <button class="btn cancel" id="closeBudgetBtn">Annuleren</button>
+    <br>
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn save" id="saveBudgetBtn"><i class="fa-solid fa-floppy-disk"></i> Opslaan</button>
+      <button class="btn cancel" id="closeBudgetBtn"><i class="fa-solid fa-xmark"></i> Annuleren</button>
+    </div>
   </div>
 </div>
 
-<!-- Externe JS -->
-<script type="module" src="./script.js"></script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import * as appFunctions from "./script.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAkBAw17gNU_EBhn8dKgyY5qv-ecfWaG2s",
+  authDomain: "finance-jonas.firebaseapp.com",
+  projectId: "finance-jonas",
+  storageBucket: "finance-jonas.firebasestorage.app",
+  messagingSenderId: "497182804753",
+  appId: "1:497182804753:web:ea942a578dd1c15f631ab0",
+  measurementId: "G-0J29T1Z7MV"
+};
+
+const firebaseApp = initializeApp(firebaseConfig);
+const auth = getAuth(firebaseApp);
+const db = getFirestore(firebaseApp);
+window.db = db;
+
+const provider = new GoogleAuthProvider();
+
+const login = async () => {
+  try {
+    const result = await signInWithPopup(auth, provider);
+    window.user = result.user;
+    appFunctions.loadData();
+  } catch(e) {
+    console.error(e);
+    alert("Login mislukt!");
+  }
+};
+
+onAuthStateChanged(auth, (user) => {
+  if(!user){
+    login();
+  } else {
+    window.user = user;
+    appFunctions.loadData();
+  }
+});
+
+// Event Listeners
+document.getElementById("addBtn").addEventListener("click", appFunctions.openModal);
+document.getElementById("closeModalBtn").addEventListener("click", appFunctions.closeModal);
+document.getElementById("saveEntryBtn").addEventListener("click", appFunctions.saveEntry);
+document.getElementById("calBtn").addEventListener("click", appFunctions.buildCalendar);
+document.getElementById("budgetBtn").addEventListener("click", appFunctions.openBudget);
+document.getElementById("closeBudgetBtn").addEventListener("click", appFunctions.closeBudget);
+document.getElementById("saveBudgetBtn").addEventListener("click", appFunctions.saveBudget);
+document.getElementById("themeToggle").addEventListener("click", appFunctions.toggleTheme);
+document.getElementById("closeDayBtn").addEventListener("click", appFunctions.closeDay);
+</script>
 
 </body>
 </html>
