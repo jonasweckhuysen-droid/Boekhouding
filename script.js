@@ -35,27 +35,14 @@ function openModal() {
 
 function closeModal() {
   document.getElementById("modal").style.display = "none";
-}
-
-// =====================
-// NAVIGATIE
-// =====================
-function goToOverzicht() {
-  window.location.href = "overzicht.html";
-}
-
-function goToIndex() {
-  window.location.href = "index.html";
+  clearForm();
 }
 
 // =====================
 // OPSLAAN
 // =====================
 function saveEntry() {
-  if (!db) {
-    alert("Database wordt nog geladen...");
-    return;
-  }
+  if (!db) { alert("Database wordt nog geladen..."); return; }
 
   const soort = document.getElementById("soort").value;
   const bron = document.getElementById("bron").value.trim();
@@ -68,18 +55,9 @@ function saveEntry() {
     return;
   }
 
-  const bedrag =
-    soort === "uitgave"
-      ? -Math.abs(bedragRaw)
-      : Math.abs(bedragRaw);
+  const bedrag = soort === "uitgave" ? -Math.abs(bedragRaw) : Math.abs(bedragRaw);
 
-  const entry = {
-    soort,
-    bron,
-    datum,
-    bedrag,
-    recurring
-  };
+  const entry = { soort, bron, datum, bedrag, recurring };
 
   const transaction = db.transaction(["boekhouding"], "readwrite");
   const store = transaction.objectStore("boekhouding");
@@ -87,7 +65,6 @@ function saveEntry() {
 
   transaction.oncomplete = function () {
     closeModal();
-    clearForm();
     loadData();
   };
 }
@@ -103,7 +80,7 @@ function clearForm() {
 }
 
 // =====================
-// SALDO
+// SALDO & ENTRIES TONEN
 // =====================
 function loadData() {
   if (!db) return;
@@ -113,19 +90,57 @@ function loadData() {
   const request = store.getAll();
 
   request.onsuccess = function () {
-    updateSaldo(request.result);
+    const data = request.result;
+    updateSaldo(data);
+    showEntries(data);
   };
 }
 
 function updateSaldo(data) {
   let total = 0;
+  data.forEach(e => total += e.bedrag);
+  document.getElementById("saldoBox").innerText = "€ " + total.toFixed(2).replace(".", ",");
+}
 
-  data.forEach(entry => {
-    total += entry.bedrag;
+function showEntries(entries) {
+  const container = document.getElementById("entriesList");
+  container.innerHTML = "";
+
+  entries.forEach(e => {
+    const div = document.createElement("div");
+    div.className = `entry ${e.soort}`;
+    div.innerHTML = `
+      <span>${e.datum} • ${e.bron} • € ${Math.abs(e.bedrag).toFixed(2).replace(".", ",")}</span>
+      <button onclick="deleteEntry(${e.id})"><i class="fas fa-trash"></i></button>
+    `;
+    container.appendChild(div);
   });
+}
 
-  document.getElementById("saldo").innerText =
-    "€ " + total.toFixed(2).replace(".", ",");
+// =====================
+// DELETE ENTRY
+// =====================
+function deleteEntry(id) {
+  const transaction = db.transaction(["boekhouding"], "readwrite");
+  const store = transaction.objectStore("boekhouding");
+  store.delete(id);
+  transaction.oncomplete = loadData;
+}
+
+// =====================
+// FILTER / SEARCH
+// =====================
+function filterEntries() {
+  const query = document.getElementById("search").value.toLowerCase();
+  const transaction = db.transaction(["boekhouding"], "readonly");
+  const store = transaction.objectStore("boekhouding");
+  const request = store.getAll();
+
+  request.onsuccess = function () {
+    const filtered = request.result.filter(e => e.bron.toLowerCase().includes(query));
+    showEntries(filtered);
+    updateSaldo(filtered);
+  };
 }
 
 // =====================
@@ -136,7 +151,6 @@ function applyRecurring() {
 
   const transaction = db.transaction(["boekhouding"], "readwrite");
   const store = transaction.objectStore("boekhouding");
-
   const request = store.getAll();
 
   request.onsuccess = function () {
@@ -150,10 +164,7 @@ function applyRecurring() {
 
         while (
           lastDate.getFullYear() < now.getFullYear() ||
-          (
-            lastDate.getFullYear() === now.getFullYear() &&
-            lastDate.getMonth() < now.getMonth()
-          )
+          (lastDate.getFullYear() === now.getFullYear() && lastDate.getMonth() < now.getMonth())
         ) {
           lastDate.setMonth(lastDate.getMonth() + 1);
 
