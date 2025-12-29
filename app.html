@@ -17,74 +17,33 @@ connect-src 'self' https://*.firebaseio.com https://*.googleapis.com;
 ">
 
 <style>
-body{
-  margin:0;
-  font-family:'Poppins',sans-serif;
-  background:linear-gradient(135deg,#dbeafe,#f0f9ff);
-  min-height:100vh;
-  transition:.4s;
-  display:flex;
-  justify-content:center;
-}
+body{margin:0;font-family:'Poppins',sans-serif;background:linear-gradient(135deg,#dbeafe,#f0f9ff);min-height:100vh;transition:.4s;display:flex;justify-content:center;}
 body.dark{background:linear-gradient(135deg,#020617,#020617);color:white;}
-
-.container{
-  width:100%;
-  max-width:400px;
-  padding:20px;
-  display:flex;
-  flex-direction:column;
-  gap:20px;
-  box-sizing:border-box;
-}
-
+.container{width:100%;max-width:400px;padding:20px;display:flex;flex-direction:column;gap:20px;box-sizing:border-box;}
 header{text-align:center;}
-
-#saldoCard, #fixedCostsCard, #savingsCard, .actions{
-  background:white;
-  border-radius:20px;
-  padding:16px;
-  box-shadow:0 8px 20px rgba(0,0,0,.1);
-}
+#saldoCard, #fixedCostsCard, #savingsCard, .actions{background:white;border-radius:20px;padding:16px;box-shadow:0 8px 20px rgba(0,0,0,.1);}
 body.dark #saldoCard, body.dark #fixedCostsCard, body.dark #savingsCard{background:#020617}
-
 #saldoCard{display:flex;flex-direction:column;align-items:center;gap:8px;}
 #saldo{font-size:32px;font-weight:600;}
 #saldoCard i{font-size:28px;color:#60a5fa;}
 #saldoBarContainer{width:100%;background:#e0e0e0;height:12px;border-radius:8px;margin-top:8px;overflow:hidden;}
 #saldoBar{width:0%;height:100%;background:#60a5fa;transition:width .3s;}
-
 #fixedCostsCard p, #savingsCard p{font-weight:600;margin-bottom:6px;}
 #fixedCostsCard div span, #savingsCard div span{display:block;margin:4px 0;}
-
 .actions{display:flex;justify-content:space-between;gap:10px;}
-.btn{
-  flex:1;
-  padding:12px 10px;
-  border-radius:14px;
-  border:none;
-  font-size:16px;
-  cursor:pointer;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:6px;
-  transition:.2s;
-}
+.btn{flex:1;padding:12px 10px;border-radius:14px;border:none;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:.2s;}
 .btn:hover{opacity:.85;}
 .add{background:#60a5fa;color:white;}
 .cal{background:#fbbf24;color:white;}
 .btn-view{background:#10b981;color:white;}
 .btn.save{background:#3b82f6;color:white;}
 .btn.cancel{background:#ef4444;color:white;}
-
 #calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;}
 .day{background:white;padding:10px;border-radius:12px;text-align:center;cursor:pointer;box-shadow:0 4px 10px rgba(0,0,0,.08);transition:.2s;}
 .day:hover{transform:translateY(-2px);}
 body.dark .day{background:#020617}
 .day.has{border:2px solid #60a5fa}
-
-#modal,#dayModal,#fixedCostsModal,#savingsModal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;}
+#modal,#dayModal,#fixedCostsModal,#savingsModal,#categoryModal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;}
 .box{background:white;width:90%;max-width:360px;padding:20px;border-radius:20px;display:flex;flex-direction:column;gap:10px;}
 body.dark .box{background:#020617}
 input,select{width:100%;padding:10px;margin-top:8px;border-radius:10px;border:1px solid #cbd5f5;}
@@ -108,9 +67,7 @@ body.dark .themeToggle{background:rgba(30,30,30,0.8);color:white;}
   <div id="saldoCard">
     <i class="fa-solid fa-wallet"></i>
     <div id="saldo">€ 0,00</div>
-    <div id="saldoBarContainer">
-      <div id="saldoBar"></div>
-    </div>
+    <div id="saldoBarContainer"><div id="saldoBar"></div></div>
     <div id="expectedEnd">🔮 Verwacht einde maand: € 0,00</div>
   </div>
 
@@ -139,9 +96,14 @@ body.dark .themeToggle{background:rgba(30,30,30,0.8);color:white;}
     <h3>Uitgaven per categorie (maandelijks)</h3>
     <canvas id="expenseChart" width="400" height="200"></canvas>
   </div>
+
+  <!-- Knop categoriebeheer -->
+  <button class="btn btn-view" id="manageCategoriesBtn">🗂️ Beheer categorieën</button>
 </div>
 
 <!-- MODALS -->
+
+<!-- Toevoegen / Bewerk beweging -->
 <div id="modal">
   <div class="box">
     <h3>Nieuwe beweging</h3>
@@ -149,7 +111,8 @@ body.dark .themeToggle{background:rgba(30,30,30,0.8);color:white;}
       <option value="inkomst">💰 Inkomst</option>
       <option value="uitgave">💸 Uitgave</option>
     </select>
-    <input id="bron" placeholder="Van / Naar">
+    <input id="bron" placeholder="Van / Naar" list="bronList">
+    <datalist id="bronList"></datalist>
     <input type="date" id="datum">
     <input type="number" id="bedrag" placeholder="Bedrag">
     <label><input type="checkbox" id="recurring"> Maandelijks</label>
@@ -164,6 +127,7 @@ body.dark .themeToggle{background:rgba(30,30,30,0.8);color:white;}
   </div>
 </div>
 
+<!-- Dag modal -->
 <div id="dayModal">
   <div class="box">
     <h3 id="dayTitle"></h3>
@@ -172,6 +136,7 @@ body.dark .themeToggle{background:rgba(30,30,30,0.8);color:white;}
   </div>
 </div>
 
+<!-- Vaste kosten -->
 <div id="fixedCostsModal">
   <div class="box">
     <h2>Vaste Kosten</h2>
@@ -185,6 +150,7 @@ body.dark .themeToggle{background:rgba(30,30,30,0.8);color:white;}
   </div>
 </div>
 
+<!-- Spaarpotten -->
 <div id="savingsModal">
   <div class="box">
     <h3>Spaarpot aanmaken / bewerken</h3>
@@ -196,7 +162,7 @@ body.dark .themeToggle{background:rgba(30,30,30,0.8);color:white;}
   </div>
 </div>
 
-<!-- Voeg dit net boven </body> toe, naast de andere modals -->
+<!-- Categoriebeheer -->
 <div id="categoryModal">
   <div class="box">
     <h3>Categoriebeheer</h3>
@@ -209,10 +175,6 @@ body.dark .themeToggle{background:rgba(30,30,30,0.8);color:white;}
     </div>
   </div>
 </div>
-
-<!-- Voeg een knop toe ergens in de container om categoriebeheer te openen -->
-<button class="btn btn-view" id="manageCategoriesBtn">🗂️ Beheer categorieën</button>
-
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script type="module" src="script.js"></script>
