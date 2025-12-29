@@ -9,7 +9,6 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
 
-<!-- Content Security Policy -->
 <meta http-equiv="Content-Security-Policy" content="
   default-src 'self';
   font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com data:;
@@ -25,24 +24,62 @@ body{
   background:linear-gradient(135deg,#dbeafe,#f0f9ff);
   min-height:100vh;
   transition:.4s;
+  display:flex;
+  justify-content:center;
 }
 body.dark{background:linear-gradient(135deg,#020617,#020617);color:white;}
 
-header{text-align:center;padding:20px;}
-#saldoCard{
-  background:white;margin:20px auto;max-width:360px;padding:20px;
-  border-radius:20px;box-shadow:0 10px 25px rgba(0,0,0,.1);
-  display:flex;flex-direction:column;align-items:center;
+.container{
+  width:100%;
+  max-width:400px;
+  padding:20px;
+  display:flex;
+  flex-direction:column;
+  gap:20px;
+  box-sizing:border-box;
 }
-body.dark #saldoCard{background:#020617}
 
-#saldo{font-size:32px;font-weight:600;margin-top:6px;}
-#saldoCard i{font-size:24px;color:#60a5fa;}
+header{
+  text-align:center;
+}
 
-.actions{display:flex;gap:12px;justify-content:center;margin:20px 0;}
+#saldoCard, #fixedCostsCard, .actions{
+  background:white;
+  border-radius:20px;
+  padding:16px;
+  box-shadow:0 8px 20px rgba(0,0,0,.1);
+}
+body.dark #saldoCard, body.dark #fixedCostsCard{background:#020617}
+
+#saldoCard{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:8px;
+}
+#saldo{font-size:32px;font-weight:600;}
+#saldoCard i{font-size:28px;color:#60a5fa;}
+
+#fixedCostsCard p{font-weight:600;margin-bottom:6px;}
+#fixedCostsCard div span{display:block;margin:4px 0;}
+
+.actions{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+}
 .btn{
-  padding:12px 18px;border-radius:14px;border:none;font-size:16px;cursor:pointer;
-  display:flex;align-items:center;gap:8px;transition:.2s;
+  flex:1;
+  padding:12px 10px;
+  border-radius:14px;
+  border:none;
+  font-size:16px;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  transition:.2s;
 }
 .btn:hover{opacity:.85;}
 .add{background:#60a5fa;color:white;}
@@ -51,10 +88,20 @@ body.dark #saldoCard{background:#020617}
 .btn.save{background:#3b82f6;color:white;}
 .btn.cancel{background:#ef4444;color:white;}
 
-#calendar{max-width:380px;margin:30px auto;display:grid;grid-template-columns:repeat(7,1fr);gap:6px;}
+#calendar{
+  display:grid;
+  grid-template-columns:repeat(7,1fr);
+  gap:6px;
+}
+
 .day{
-  background:white;padding:10px;border-radius:12px;text-align:center;
-  cursor:pointer;box-shadow:0 4px 10px rgba(0,0,0,.08);transition:.2s;
+  background:white;
+  padding:10px;
+  border-radius:12px;
+  text-align:center;
+  cursor:pointer;
+  box-shadow:0 4px 10px rgba(0,0,0,.08);
+  transition:.2s;
 }
 .day:hover{transform:translateY(-2px);}
 body.dark .day{background:#020617}
@@ -90,28 +137,32 @@ body.dark .themeToggle{background:rgba(30,30,30,0.8);color:white;}
 
 <div class="themeToggle" id="themeToggle">🌙</div>
 
-<header>
-  <h1>Meneige Boekhouding <i class="fa-solid fa-piggy-bank"></i></h1>
-</header>
+<div class="container">
 
-<div id="saldoCard">
-  <i class="fa-solid fa-wallet"></i>
-  <div id="saldo">€ 0,00</div>
+  <header>
+    <h1>Meneige Boekhouding <i class="fa-solid fa-piggy-bank"></i></h1>
+  </header>
+
+  <div id="saldoCard">
+    <i class="fa-solid fa-wallet"></i>
+    <div id="saldo">€ 0,00</div>
+  </div>
+
+  <div id="fixedCostsCard">
+    <p>Vaste Kosten</p>
+    <div id="fixedCostsList">Geen vaste kosten ingesteld</div>
+    <br>
+    <button class="btn btn-view" id="fixedCostsBtn">⚙️ Instellen</button>
+  </div>
+
+  <div class="actions">
+    <button class="btn add" id="addBtn"><i class="fa-solid fa-plus"></i> Toevoegen</button>
+    <button class="btn cal" id="calBtn"><i class="fa-solid fa-calendar-days"></i> Kalender</button>
+  </div>
+
+  <div id="calendar"></div>
+
 </div>
-
-<div id="fixedCostsCard">
-  <p>Vaste Kosten</p>
-  <div id="fixedCostsList">Geen vaste kosten ingesteld</div>
-  <br>
-  <button class="btn btn-view" id="fixedCostsBtn">⚙️ Instellen</button>
-</div>
-
-<div class="actions">
-  <button class="btn add" id="addBtn"><i class="fa-solid fa-plus"></i> Toevoegen</button>
-  <button class="btn cal" id="calBtn"><i class="fa-solid fa-calendar-days"></i> Kalender</button>
-</div>
-
-<div id="calendar"></div>
 
 <!-- MODAL TOEVOEGEN -->
 <div id="modal">
@@ -157,11 +208,11 @@ body.dark .themeToggle{background:rgba(30,30,30,0.8);color:white;}
 </div>
 
 <script type="module">
+// ---------- Firebase & Auth ----------
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getFirestore, collection, addDoc, getDocs, query } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// ---------------- FIREBASE INIT ----------------
 const firebaseConfig = {
   apiKey: "AIzaSyAkBAw17gNU_EBhn8dKgyY5qv-ecfWaG2s",
   authDomain: "finance-jonas.firebaseapp.com",
@@ -177,27 +228,20 @@ const db = getFirestore(firebaseApp);
 window.db = db;
 const provider = new GoogleAuthProvider();
 
-// ---------------- AUTH ----------------
 const login = async () => {
   try {
     const result = await signInWithPopup(auth, provider);
     window.user = result.user;
     loadData();
-  } catch(e) {
-    console.error(e);
-    alert("Login mislukt!");
-  }
+  } catch(e) { console.error(e); alert("Login mislukt!"); }
 };
 
 onAuthStateChanged(auth, (user) => {
   if(!user) login();
-  else {
-    window.user = user;
-    loadData();
-  }
+  else { window.user=user; loadData(); }
 });
 
-// ---------------- UI ELEMENTS ----------------
+// ---------- UI ----------
 const modal = document.getElementById("modal");
 const dayModal = document.getElementById("dayModal");
 const fixedCostsModal = document.getElementById("fixedCostsModal");
@@ -214,13 +258,12 @@ const dayList = document.getElementById("dayList");
 const saldoDiv = document.getElementById("saldo");
 const fixedCostsList = document.getElementById("fixedCostsList");
 
-// Inputs fixed costs
 const leningInput = document.getElementById("leningInput");
 const electriciteitInput = document.getElementById("electriciteitInput");
 const mobiliteitInput = document.getElementById("mobiliteitInput");
 const verzekeringInput = document.getElementById("verzekeringInput");
 
-// ---------------- MODALS ----------------
+// ---------- MODALS ----------
 function openModal(){ modal.style.display="flex"; }
 function closeModal(){ modal.style.display="none"; }
 function openDayModal(){ dayModal.style.display="flex"; }
@@ -253,7 +296,7 @@ function updateFixedCostsUI(){
   else fixedCostsList.innerHTML = keys.map(k=>`<span>${k.charAt(0).toUpperCase()+k.slice(1)}: € ${costs[k].toFixed(2)}</span>`).join("<br>");
 }
 
-// ---------------- SALDO & VERWACHT ----------------
+// ---------- SALDO ----------
 function updateSaldoUI(saldo=0){
   const costs = JSON.parse(localStorage.getItem("fixedCosts"))||{};
   const totalFixed = Object.values(costs).reduce((a,b)=>a+b,0);
@@ -266,13 +309,13 @@ function updateSaldoUI(saldo=0){
     expectedDiv = document.createElement("div");
     expectedDiv.id="expectedEnd";
     expectedDiv.style.textAlign="center";
-    expectedDiv.style.marginTop="8px";
+    expectedDiv.style.marginTop="6px";
     saldoDiv.parentNode.appendChild(expectedDiv);
   }
   expectedDiv.innerHTML = `🔮 Verwacht einde maand: € ${expectedEnd.toFixed(2).replace(".",",")}`;
 }
 
-// ---------------- FIRESTORE ----------------
+// ---------- FIRESTORE ----------
 async function saveEntry(){
   const soortVal = soort.value;
   const bronVal = bron.value;
@@ -295,24 +338,20 @@ async function saveEntry(){
 async function loadData(){
   const q = query(collection(db,"users",user.uid,"items"));
   const snap = await getDocs(q);
-
   let saldo=0;
-  const now=new Date(), m=now.getMonth(), y=now.getFullYear();
   const items=[];
-
   snap.forEach(doc=>{
     const e=doc.data();
     saldo += e.bedrag;
     const d=new Date(e.datum);
     items.push({...e,datumObj:d});
   });
-
   window.items=items;
   updateFixedCostsUI();
   updateSaldoUI(saldo);
 }
 
-// ---------------- KALENDER ----------------
+// ---------- KALENDER ----------
 function buildCalendar(){
   const calendar = document.getElementById("calendar");
   calendar.innerHTML="";
@@ -322,10 +361,7 @@ function buildCalendar(){
   const firstDay=new Date(year,month,1).getDay();
   const daysInMonth=new Date(year,month+1,0).getDate();
 
-  for(let i=0;i<firstDay;i++){
-    const empty=document.createElement("div");
-    calendar.appendChild(empty);
-  }
+  for(let i=0;i<firstDay;i++) calendar.appendChild(document.createElement("div"));
 
   for(let d=1;d<=daysInMonth;d++){
     const dayDiv=document.createElement("div");
@@ -355,10 +391,10 @@ function buildCalendar(){
   }
 }
 
-// ---------------- THEME ----------------
+// ---------- THEME ----------
 function toggleTheme(){ document.body.classList.toggle("dark"); }
 
-// ---------------- EVENT LISTENERS ----------------
+// ---------- EVENT LISTENERS ----------
 document.getElementById("addBtn").addEventListener("click", openModal);
 document.getElementById("closeModalBtn").addEventListener("click", closeModal);
 document.getElementById("saveEntryBtn").addEventListener("click", saveEntry);
