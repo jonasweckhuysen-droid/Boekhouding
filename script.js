@@ -331,6 +331,22 @@ function saveBeheer() {
   }
 
   const savings = getSavings();
+  savings.push({ name, amount: target });
+  saveSavingsToStorage(savings);
+
+  // Reset inputvelden
+  document.getElementById("savingsName").value = "";
+  document.getElementById("savingsTarget").value = "";
+
+  // Update dropdown en savings list
+  updateSavingsUI();
+  updateSavingsListUI();
+
+  closeBeheerModal();
+}
+  }
+
+  const savings = getSavings();
   savings.push({name, amount: target});
   saveSavingsToStorage(savings);
   updateSavingsUI();
@@ -341,3 +357,43 @@ function saveBeheer() {
 document.getElementById("savingsBtn").addEventListener("click", openBeheerModal);
 document.getElementById("closeSavingsBtn").addEventListener("click", closeBeheerModal);
 document.getElementById("saveSavingsBtn").addEventListener("click", saveBeheer);
+
+function updateSavingsListUI() {
+  const savingsListDiv = document.getElementById("savingsList");
+  const savings = getSavings();
+  if(savings.length === 0) {
+    savingsListDiv.innerText = "Geen spaarpotjes ingesteld";
+    return;
+  }
+  savingsListDiv.innerHTML = "";
+  savings.forEach((s,i)=>{
+    const div = document.createElement("div");
+    div.style.display = "flex";
+    div.style.justifyContent = "space-between";
+    div.style.alignItems = "center";
+    div.style.marginBottom = "4px";
+
+    const txt = document.createElement("span");
+    txt.innerText = `${s.name}: € ${s.amount.toFixed(2)}`;
+
+    const delBtn = document.createElement("button");
+    delBtn.innerText = "🗑️";
+    delBtn.style.border = "none";
+    delBtn.style.background = "transparent";
+    delBtn.style.cursor = "pointer";
+    delBtn.addEventListener("click", ()=>{
+      if(confirm(`Wil je "${s.name}" verwijderen?`)) {
+        const allSavings = getSavings();
+        allSavings.splice(i,1);
+        saveSavingsToStorage(allSavings);
+        updateSavingsUI();
+        updateSavingsListUI();
+      }
+    });
+
+    div.appendChild(txt);
+    div.appendChild(delBtn);
+    savingsListDiv.appendChild(div);
+  });
+}
+updateSavingsListUI();
