@@ -1,56 +1,42 @@
-import {
-  collection,
-  addDoc,
-  getDocs,
-  query
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { collection, addDoc, getDocs, query } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// =====================
+// --------------------
 // MODALS
-// =====================
-function openModal(){ modal.style.display="flex"; }
-function closeModal(){ modal.style.display="none"; }
+// --------------------
+export function openModal(){ document.getElementById("modal").style.display="flex"; }
+export function closeModal(){ document.getElementById("modal").style.display="none"; }
 
-// =====================
+// --------------------
 // BUDGET
-// =====================
-function openBudget(){
+// --------------------
+export function openBudget(){
+  const budgetModal = document.getElementById("budgetModal");
   budgetModal.style.display="flex";
-  budgetInput.value = localStorage.getItem("monthlyBudget") || "";
+  document.getElementById("budgetInput").value = localStorage.getItem("monthlyBudget") || "";
 }
-
-function closeBudget(){
-  budgetModal.style.display="none";
-}
-
-function saveBudget(){
-  const val = parseFloat(budgetInput.value);
-  if(isNaN(val) || val <= 0){
-    alert("Geef een geldig bedrag in");
-    return;
-  }
+export function closeBudget(){ document.getElementById("budgetModal").style.display="none"; }
+export function saveBudget(){
+  const val = parseFloat(document.getElementById("budgetInput").value);
+  if(isNaN(val) || val<=0){ alert("Geef een geldig bedrag in"); return; }
   localStorage.setItem("monthlyBudget", val);
   closeBudget();
   updateBudgetUI();
 }
 
-// =====================
-// OPSLAAN (FIREBASE)
-// =====================
-async function saveEntry(){
-  const soortVal = soort.value;
-  const bronVal = bron.value;
-  const datumVal = datum.value;
-  const bedragVal = parseFloat(bedrag.value) * (soortVal==="uitgave"?-1:1);
-  const recurringVal = recurring.checked;
+// --------------------
+// OPSLAAN FIRESTORE
+// --------------------
+export async function saveEntry(){
+  const soortVal = document.getElementById("soort").value;
+  const bronVal = document.getElementById("bron").value;
+  const datumVal = document.getElementById("datum").value;
+  const bedragVal = parseFloat(document.getElementById("bedrag").value) * (soortVal==="uitgave"?-1:1);
+  const recurringVal = document.getElementById("recurring").checked;
 
-  if(!datumVal || isNaN(bedragVal)){
-    alert("Vul alles in");
-    return;
-  }
+  if(!datumVal || isNaN(bedragVal)){ alert("Vul alles in"); return; }
 
   await addDoc(
-    collection(db, "users", user.uid, "items"),
+    collection(window.db, "users", window.user.uid, "items"),
     {
       soort: soortVal,
       bron: bronVal,
@@ -65,16 +51,15 @@ async function saveEntry(){
   loadData();
 }
 
-// =====================
-// SALDO + BUDGET CHECK
-// =====================
-async function loadData(){
-  const q = query(collection(db, "users", user.uid, "items"));
+// --------------------
+// LOAD DATA
+// --------------------
+export async function loadData(){
+  const q = query(collection(window.db, "users", window.user.uid, "items"));
   const snap = await getDocs(q);
 
   let saldo = 0;
   let uitgavenDezeMaand = 0;
-
   const now = new Date();
   const m = now.getMonth();
   const y = now.getFullYear();
@@ -82,9 +67,8 @@ async function loadData(){
   snap.forEach(doc=>{
     const e = doc.data();
     saldo += e.bedrag;
-
     const d = new Date(e.datum);
-    if(e.bedrag < 0 && d.getMonth()===m && d.getFullYear()===y){
+    if(e.bedrag<0 && d.getMonth()===m && d.getFullYear()===y){
       uitgavenDezeMaand += Math.abs(e.bedrag);
     }
   });
@@ -95,10 +79,10 @@ async function loadData(){
   updateBudgetUI(uitgavenDezeMaand);
 }
 
-// =====================
+// --------------------
 // BUDGET UI
-// =====================
-function updateBudgetUI(spent=0){
+// --------------------
+export function updateBudgetUI(spent=0){
   const budget = parseFloat(localStorage.getItem("monthlyBudget"));
   const label = document.getElementById("budgetAmount");
   const warning = document.getElementById("budgetWarning");
@@ -116,15 +100,20 @@ function updateBudgetUI(spent=0){
     warning.style.display="block";
     warning.style.background="#fee2e2";
     warning.style.color="#991b1b";
-    warning.innerText = "⚠️ Budget overschreden!";
-  }
-  else if(percent >= 0.8){
+    warning.innerText="⚠️ Budget overschreden!";
+  } else if(percent>=0.8){
     warning.style.display="block";
     warning.style.background="#fef3c7";
     warning.style.color="#92400e";
-    warning.innerText = "⚠️ Je zit boven 80% van je budget";
-  }
-  else{
+    warning.innerText="⚠️ Je zit boven 80% van je budget";
+  } else {
     warning.style.display="none";
   }
+}
+
+// --------------------
+// THEME TOGGLE
+// --------------------
+export function toggleTheme(){
+  document.body.classList.toggle("dark");
 }
