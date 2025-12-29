@@ -70,7 +70,7 @@ body.dark #saldoCard{background:#020617}
 body.dark .day{background:#020617}
 .day.has{border:2px solid #60a5fa}
 
-#modal,#dayModal{
+#modal,#dayModal,#budgetModal{
   position:fixed;
   inset:0;
   background:rgba(0,0,0,.5);
@@ -126,19 +126,14 @@ input,select{
 <div id="saldo">€ 0,00</div>
 </div>
 
-<div id="budgetCard" style="max-width:360px;margin:10px auto;
-background:white;padding:16px;border-radius:18px;
-box-shadow:0 6px 18px rgba(0,0,0,.1);">
+<div id="budgetCard">
   <p>Maandelijks budget</p>
   <strong id="budgetAmount">Niet ingesteld</strong>
   <br><br>
   <button class="btn btn-view" id="budgetBtn">⚙️ Budget instellen</button>
 </div>
 
-<div id="budgetWarning" style="display:none;
-max-width:360px;margin:10px auto;
-padding:14px;border-radius:14px;
-text-align:center;font-weight:500;"></div>
+<div id="budgetWarning"></div>
 
 <div class="actions">
 <button class="btn add" id="addBtn">➕ Toevoegen</button>
@@ -147,41 +142,35 @@ text-align:center;font-weight:500;"></div>
 
 <div id="calendar"></div>
 
-<!-- MODAL TOEVOEGEN -->
-<div id="modal">
-<div class="box">
-<h3>Nieuwe beweging</h3>
-
-<select id="soort">
-<option value="inkomst">💰 Inkomst</option>
-<option value="uitgave">💸 Uitgave</option>
-</select>
-
-<input id="bron" placeholder="Van / Naar">
-<input type="date" id="datum">
-<input type="number" id="bedrag" placeholder="Bedrag">
-
-<label><input type="checkbox" id="recurring"> Maandelijks</label>
-
-<br><br>
-<button class="btn add" id="saveEntryBtn">Opslaan</button>
-<button class="btn" id="closeModalBtn">Annuleren</button>
-</div>
+<!-- MODALS -->
+<div id="modal" class="modal">
+  <div class="box">
+    <h3>Nieuwe beweging</h3>
+    <select id="soort">
+      <option value="inkomst">💰 Inkomst</option>
+      <option value="uitgave">💸 Uitgave</option>
+    </select>
+    <input id="bron" placeholder="Van / Naar">
+    <input type="date" id="datum">
+    <input type="number" id="bedrag" placeholder="Bedrag">
+    <label><input type="checkbox" id="recurring"> Maandelijks</label>
+    <br><br>
+    <button class="btn add" id="saveEntryBtn">Opslaan</button>
+    <button class="btn" id="closeModalBtn">Annuleren</button>
+  </div>
 </div>
 
-<!-- DAGDETAIL -->
-<div id="dayModal">
-<div class="box">
-<h3 id="dayTitle"></h3>
-<div id="dayList"></div>
-<button class="btn" id="closeDayBtn">Sluiten</button>
-</div>
+<div id="dayModal" class="modal">
+  <div class="box">
+    <h3 id="dayTitle"></h3>
+    <div id="dayList"></div>
+    <button class="btn" id="closeDayBtn">Sluiten</button>
+  </div>
 </div>
 
-<!-- BUDGET MODAL -->
-<div id="budgetModal" style="display:none" class="modal">
-  <div class="modalBox">
-    <h2>Maandelijks budget</h2>
+<div id="budgetModal" class="modal">
+  <div class="box">
+    <h3>Maandelijks budget</h3>
     <input type="number" id="budgetInput" placeholder="Bijv. 1500">
     <br><br>
     <button class="btn save" id="saveBudgetBtn">Opslaan</button>
@@ -209,10 +198,9 @@ const firebaseConfig = {
 const firebaseApp = initializeApp(firebaseConfig);
 const auth = getAuth(firebaseApp);
 const db = getFirestore(firebaseApp);
-
 window.db = db;
 
-// --- LOGIN MET GOOGLE ---
+// --- GOOGLE LOGIN ---
 const provider = new GoogleAuthProvider();
 const login = async () => {
   try {
@@ -226,15 +214,14 @@ const login = async () => {
 };
 
 onAuthStateChanged(auth, (user) => {
-  if (!user) {
-    login();
-  } else {
+  if (!user) login();
+  else {
     window.user = user;
     loadData();
   }
 });
 
-// --- Event Listeners ---
+// --- Event listeners ---
 document.getElementById("addBtn").addEventListener("click", openModal);
 document.getElementById("closeModalBtn").addEventListener("click", closeModal);
 document.getElementById("saveEntryBtn").addEventListener("click", saveEntry);
@@ -247,8 +234,6 @@ document.getElementById("saveBudgetBtn").addEventListener("click", saveBudget);
 
 document.getElementById("themeToggle").addEventListener("click", toggleTheme);
 </script>
-
-<script type="module" src="script.js"></script>
 
 </body>
 </html>
