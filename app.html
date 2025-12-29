@@ -5,9 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Meneige Boekhouding</title>
 
-<!-- Font Awesome -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
 <!-- Content Security Policy -->
 <meta http-equiv="Content-Security-Policy" content="
   default-src 'self';
@@ -18,10 +15,10 @@
 ">
 
 <style>
-/* --- CSS --- */
+/* Systeemfont i.p.v. Google Fonts */
 body{
   margin:0;
-  font-family:Arial, sans-serif;
+  font-family: Arial, sans-serif;
   background:linear-gradient(135deg,#dbeafe,#f0f9ff);
   min-height:100vh;
   transition:.4s;
@@ -79,7 +76,7 @@ input,select{width:100%;padding:10px;margin-top:8px;border-radius:10px;border:1p
 
 <div id="calendar"></div>
 
-<!-- MODAL TOEVOEGEN -->
+<!-- MODALS -->
 <div id="modal">
   <div class="box">
     <h3>Nieuwe beweging</h3>
@@ -97,7 +94,6 @@ input,select{width:100%;padding:10px;margin-top:8px;border-radius:10px;border:1p
   </div>
 </div>
 
-<!-- DAGDETAIL -->
 <div id="dayModal">
   <div class="box">
     <h3 id="dayTitle"></h3>
@@ -106,7 +102,6 @@ input,select{width:100%;padding:10px;margin-top:8px;border-radius:10px;border:1p
   </div>
 </div>
 
-<!-- BUDGET MODAL -->
 <div id="budgetModal">
   <div class="box">
     <h2>Maandelijks budget</h2>
@@ -117,61 +112,8 @@ input,select{width:100%;padding:10px;margin-top:8px;border-radius:10px;border:1p
   </div>
 </div>
 
-<!-- ------------------- SCRIPT ------------------- -->
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import * as appFunctions from "./script.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyAkBAw17gNU_EBhn8dKgyY5qv-ecfWaG2s",
-  authDomain: "finance-jonas.firebaseapp.com",
-  projectId: "finance-jonas",
-  storageBucket: "finance-jonas.firebasestorage.app",
-  messagingSenderId: "497182804753",
-  appId: "1:497182804753:web:ea942a578dd1c15f631ab0",
-  measurementId: "G-0J29T1Z7MV"
-};
-
-const firebaseApp = initializeApp(firebaseConfig);
-const auth = getAuth(firebaseApp);
-const db = getFirestore(firebaseApp);
-window.db = db;
-
-const provider = new GoogleAuthProvider();
-
-// --- LOGIN MET GOOGLE ---
-const login = async () => {
-  try {
-    const result = await signInWithPopup(auth, provider);
-    window.user = result.user;
-    appFunctions.loadData();
-  } catch(e) {
-    console.error(e);
-    alert("Login mislukt!");
-  }
-};
-
-onAuthStateChanged(auth, (user) => {
-  if(!user){
-    login();
-  } else {
-    window.user = user;
-    appFunctions.loadData();
-  }
-});
-
-// --- Event Listeners ---
-document.getElementById("addBtn").addEventListener("click", appFunctions.openModal);
-document.getElementById("closeModalBtn").addEventListener("click", appFunctions.closeModal);
-document.getElementById("saveEntryBtn").addEventListener("click", appFunctions.saveEntry);
-document.getElementById("calBtn").addEventListener("click", appFunctions.buildCalendar);
-document.getElementById("budgetBtn").addEventListener("click", appFunctions.openBudget);
-document.getElementById("closeBudgetBtn").addEventListener("click", appFunctions.closeBudget);
-document.getElementById("saveBudgetBtn").addEventListener("click", appFunctions.saveBudget);
-document.getElementById("themeToggle").addEventListener("click", appFunctions.toggleTheme);
-</script>
+<!-- Externe JS -->
+<script type="module" src="./script.js"></script>
 
 </body>
 </html>
