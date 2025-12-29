@@ -5,11 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Meneige Boekhouding</title>
 
+<!-- Google Fonts & Font Awesome -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
 
+<!-- Content Security Policy -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; font-src 'self' https://fonts.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; script-src 'self' https://www.gstatic.com;">
+
 <style>
-/* --- CSS blijft ongewijzigd --- */
 body{
   margin:0;
   font-family:'Poppins',sans-serif;
@@ -17,97 +20,28 @@ body{
   min-height:100vh;
   transition:.4s;
 }
-body.dark{
-  background:linear-gradient(135deg,#020617,#020617);
-  color:white;
-}
-header{
-  text-align:center;
-  padding:20px;
-}
-#saldoCard{
-  background:white;
-  margin:20px auto;
-  max-width:360px;
-  padding:20px;
-  border-radius:20px;
-  box-shadow:0 10px 25px rgba(0,0,0,.1);
-}
+body.dark{background:linear-gradient(135deg,#020617,#020617);color:white;}
+header{text-align:center;padding:20px;}
+#saldoCard{background:white;margin:20px auto;max-width:360px;padding:20px;border-radius:20px;box-shadow:0 10px 25px rgba(0,0,0,.1);}
 body.dark #saldoCard{background:#020617}
-#saldo{
-  font-size:32px;
-  font-weight:600;
-}
-.actions{
-  display:flex;
-  gap:12px;
-  justify-content:center;
-}
-.btn{
-  padding:14px;
-  border-radius:14px;
-  border:none;
-  font-size:16px;
-  cursor:pointer;
-}
+#saldo{font-size:32px;font-weight:600;}
+.actions{display:flex;gap:12px;justify-content:center;}
+.btn{padding:14px;border-radius:14px;border:none;font-size:16px;cursor:pointer;}
 .add{background:#60a5fa;color:white}
 .cal{background:#e0f2fe}
-#calendar{
-  max-width:380px;
-  margin:30px auto;
-  display:grid;
-  grid-template-columns:repeat(7,1fr);
-  gap:6px;
-}
-.day{
-  background:white;
-  padding:10px;
-  border-radius:12px;
-  text-align:center;
-  cursor:pointer;
-  box-shadow:0 4px 10px rgba(0,0,0,.08);
-}
+#calendar{max-width:380px;margin:30px auto;display:grid;grid-template-columns:repeat(7,1fr);gap:6px;}
+.day{background:white;padding:10px;border-radius:12px;text-align:center;cursor:pointer;box-shadow:0 4px 10px rgba(0,0,0,.08);}
 body.dark .day{background:#020617}
 .day.has{border:2px solid #60a5fa}
 
-#modal,#dayModal,#budgetModal{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.5);
-  display:none;
-  align-items:center;
-  justify-content:center;
-}
-.box{
-  background:white;
-  width:90%;
-  max-width:360px;
-  padding:20px;
-  border-radius:20px;
-}
+#modal,#dayModal,#budgetModal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;}
+.box{background:white;width:90%;max-width:360px;padding:20px;border-radius:20px;}
 body.dark .box{background:#020617}
 
-input,select{
-  width:100%;
-  padding:10px;
-  margin-top:8px;
-  border-radius:10px;
-  border:1px solid #cbd5f5;
-}
+input,select{width:100%;padding:10px;margin-top:8px;border-radius:10px;border:1px solid #cbd5f5;}
 
-.themeToggle{
-  position:fixed;
-  top:15px;
-  right:15px;
-  font-size:22px;
-  cursor:pointer;
-}
-
-.entry{
-  display:flex;
-  justify-content:space-between;
-  padding:6px 0;
-}
+.themeToggle{position:fixed;top:15px;right:15px;font-size:22px;cursor:pointer;}
+.entry{display:flex;justify-content:space-between;padding:6px 0;}
 .pos{color:#22c55e}
 .neg{color:#ef4444}
 </style>
@@ -117,33 +51,30 @@ input,select{
 
 <div class="themeToggle" id="themeToggle">🌙</div>
 
-<header>
-<h1>Meneige Boekhouding</h1>
-</header>
+<header><h1>Meneige Boekhouding</h1></header>
 
 <div id="saldoCard">
-<p>Huidig saldo</p>
-<div id="saldo">€ 0,00</div>
+  <p>Huidig saldo</p>
+  <div id="saldo">€ 0,00</div>
 </div>
 
-<div id="budgetCard">
+<div id="budgetCard" style="max-width:360px;margin:10px auto;background:white;padding:16px;border-radius:18px;box-shadow:0 6px 18px rgba(0,0,0,.1);">
   <p>Maandelijks budget</p>
-  <strong id="budgetAmount">Niet ingesteld</strong>
-  <br><br>
+  <strong id="budgetAmount">Niet ingesteld</strong><br><br>
   <button class="btn btn-view" id="budgetBtn">⚙️ Budget instellen</button>
 </div>
 
-<div id="budgetWarning"></div>
+<div id="budgetWarning" style="display:none;max-width:360px;margin:10px auto;padding:14px;border-radius:14px;text-align:center;font-weight:500;"></div>
 
 <div class="actions">
-<button class="btn add" id="addBtn">➕ Toevoegen</button>
-<button class="btn cal" id="calBtn">📅 Kalender</button>
+  <button class="btn add" id="addBtn">➕ Toevoegen</button>
+  <button class="btn cal" id="calBtn">📅 Kalender</button>
 </div>
 
 <div id="calendar"></div>
 
-<!-- MODALS -->
-<div id="modal" class="modal">
+<!-- MODAL TOEVOEGEN -->
+<div id="modal">
   <div class="box">
     <h3>Nieuwe beweging</h3>
     <select id="soort">
@@ -160,7 +91,8 @@ input,select{
   </div>
 </div>
 
-<div id="dayModal" class="modal">
+<!-- DAGDETAIL -->
+<div id="dayModal">
   <div class="box">
     <h3 id="dayTitle"></h3>
     <div id="dayList"></div>
@@ -168,9 +100,10 @@ input,select{
   </div>
 </div>
 
-<div id="budgetModal" class="modal">
+<!-- BUDGET MODAL -->
+<div id="budgetModal">
   <div class="box">
-    <h3>Maandelijks budget</h3>
+    <h2>Maandelijks budget</h2>
     <input type="number" id="budgetInput" placeholder="Bijv. 1500">
     <br><br>
     <button class="btn save" id="saveBudgetBtn">Opslaan</button>
@@ -178,12 +111,12 @@ input,select{
   </div>
 </div>
 
+<!-- ------------------- SCRIPT ------------------- -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-import { openModal, closeModal, saveEntry, buildCalendar, openBudget, closeBudget, saveBudget, loadData, toggleTheme } from "./script.js";
+import * as appFunctions from "./script.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAkBAw17gNU_EBhn8dKgyY5qv-ecfWaG2s",
@@ -200,13 +133,14 @@ const auth = getAuth(firebaseApp);
 const db = getFirestore(firebaseApp);
 window.db = db;
 
-// --- GOOGLE LOGIN ---
 const provider = new GoogleAuthProvider();
+
+// --- LOGIN MET GOOGLE ---
 const login = async () => {
   try {
     const result = await signInWithPopup(auth, provider);
     window.user = result.user;
-    loadData();
+    appFunctions.loadData();
   } catch(e) {
     console.error(e);
     alert("Login mislukt!");
@@ -214,25 +148,23 @@ const login = async () => {
 };
 
 onAuthStateChanged(auth, (user) => {
-  if (!user) login();
-  else {
+  if(!user){
+    login();
+  } else {
     window.user = user;
-    loadData();
+    appFunctions.loadData();
   }
 });
 
-// --- Event listeners ---
-document.getElementById("addBtn").addEventListener("click", openModal);
-document.getElementById("closeModalBtn").addEventListener("click", closeModal);
-document.getElementById("saveEntryBtn").addEventListener("click", saveEntry);
-
-document.getElementById("calBtn").addEventListener("click", buildCalendar);
-
-document.getElementById("budgetBtn").addEventListener("click", openBudget);
-document.getElementById("closeBudgetBtn").addEventListener("click", closeBudget);
-document.getElementById("saveBudgetBtn").addEventListener("click", saveBudget);
-
-document.getElementById("themeToggle").addEventListener("click", toggleTheme);
+// --- Event Listeners ---
+document.getElementById("addBtn").addEventListener("click", appFunctions.openModal);
+document.getElementById("closeModalBtn").addEventListener("click", appFunctions.closeModal);
+document.getElementById("saveEntryBtn").addEventListener("click", appFunctions.saveEntry);
+document.getElementById("calBtn").addEventListener("click", appFunctions.buildCalendar);
+document.getElementById("budgetBtn").addEventListener("click", appFunctions.openBudget);
+document.getElementById("closeBudgetBtn").addEventListener("click", appFunctions.closeBudget);
+document.getElementById("saveBudgetBtn").addEventListener("click", appFunctions.saveBudget);
+document.getElementById("themeToggle").addEventListener("click", appFunctions.toggleTheme);
 </script>
 
 </body>
