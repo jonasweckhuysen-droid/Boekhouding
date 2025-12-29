@@ -2,7 +2,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
 import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getFirestore, collection, addDoc, getDocs, query } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// ---------- Firebase ----------
+// Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyAkBAw17gNU_EBhn8dKgyY5qv-ecfWaG2s",
   authDomain: "finance-jonas.firebaseapp.com",
@@ -18,70 +18,75 @@ const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
 window.db = db;
 
-// ---------- Auth ----------
-const login = async () => {
-  try {
-    const result = await signInWithPopup(auth, provider);
-    window.user = result.user;
-    loadData();
-  } catch(e) { console.error(e); alert("Login mislukt!"); }
+// --- automatische categorie mapping ---
+const categoryMap = {
+  "Albert Heijn":"Boodschappen",
+  "Colruyt":"Boodschappen",
+  "Shell":"Mobiliteit",
+  "Telenet":"Internet",
+  "Netflix":"Entertainment"
 };
-onAuthStateChanged(auth, user => {
-  if(!user) login();
-  else { window.user=user; loadData(); }
-});
 
-// ---------- UI ----------
-const modal = document.getElementById("modal");
-const dayModal = document.getElementById("dayModal");
-const fixedCostsModal = document.getElementById("fixedCostsModal");
+// --- Auth ---
+const login = async () => {
+  try { const result = await signInWithPopup(auth, provider); window.user = result.user; loadData(); }
+  catch(e){console.error(e);alert("Login mislukt!");}
+};
+onAuthStateChanged(auth,user=>{if(!user) login(); else {window.user=user; loadData();}});
 
-const soort = document.getElementById("soort");
-const bron = document.getElementById("bron");
-const datum = document.getElementById("datum");
-const bedrag = document.getElementById("bedrag");
-const recurring = document.getElementById("recurring");
+// --- Elements ---
+const modal=document.getElementById("modal");
+const dayModal=document.getElementById("dayModal");
+const fixedCostsModal=document.getElementById("fixedCostsModal");
 
-const saldoDiv = document.getElementById("saldo");
-const saldoBar = document.getElementById("saldoBar");
-const expectedEndDiv = document.getElementById("expectedEnd");
-const fixedCostsList = document.getElementById("fixedCostsList");
-const dayTitle = document.getElementById("dayTitle");
-const dayList = document.getElementById("dayList");
+const soort=document.getElementById("soort");
+const bron=document.getElementById("bron");
+const datum=document.getElementById("datum");
+const bedrag=document.getElementById("bedrag");
+const recurring=document.getElementById("recurring");
 
-const leningInput = document.getElementById("leningInput");
-const electriciteitInput = document.getElementById("electriciteitInput");
-const mobiliteitInput = document.getElementById("mobiliteitInput");
-const verzekeringInput = document.getElementById("verzekeringInput");
+const saldoDiv=document.getElementById("saldo");
+const saldoBar=document.getElementById("saldoBar");
+const expectedEndDiv=document.getElementById("expectedEnd");
+const fixedCostsList=document.getElementById("fixedCostsList");
+const dayTitle=document.getElementById("dayTitle");
+const dayList=document.getElementById("dayList");
 
-// ---------- MODALS ----------
+const leningInput=document.getElementById("leningInput");
+const electriciteitInput=document.getElementById("electriciteitInput");
+const mobiliteitInput=document.getElementById("mobiliteitInput");
+const verzekeringInput=document.getElementById("verzekeringInput");
+
+// --- Modals ---
 function openModal(){ modal.style.display="flex"; }
 function closeModal(){ modal.style.display="none"; }
 function openDayModal(){ dayModal.style.display="flex"; }
 function closeDayModal(){ dayModal.style.display="none"; }
 function openFixedCosts(){
   fixedCostsModal.style.display="flex";
-  const costs = JSON.parse(localStorage.getItem("fixedCosts"))||{};
-  leningInput.value = costs.lening||"";
-  electriciteitInput.value = costs.electriciteit||"";
-  mobiliteitInput.value = costs.mobiliteit||"";
-  verzekeringInput.value = costs.verzekering||"";
+  const costs=JSON.parse(localStorage.getItem("fixedCosts"))||{};
+  leningInput.value=costs.lening||"";
+  electriciteitInput.value=costs.electriciteit||"";
+  mobiliteitInput.value=costs.mobiliteit||"";
+  verzekeringInput.value=costs.verzekering||"";
 }
 function closeFixedCosts(){ fixedCostsModal.style.display="none"; }
 
-// ---------- SAVE ENTRIES ----------
+// --- Save Entry ---
 async function saveEntry(){
-  const soortVal = soort.value;
-  const bronVal = bron.value;
-  const datumVal = datum.value;
-  const bedragVal = parseFloat(bedrag.value)*(soortVal==="uitgave"?-1:1);
-  const recurringVal = recurring.checked;
-  if(!datumVal||isNaN(bedragVal)){ alert("Vul alles in"); return; }
+  const soortVal=soort.value;
+  const bronVal=bron.value;
+  const datumVal=datum.value;
+  const bedragVal=parseFloat(bedrag.value)*(soortVal==="uitgave"?-1:1);
+  const recurringVal=recurring.checked;
+  if(!datumVal||isNaN(bedragVal)){alert("Vul alles in"); return;}
+  const categorie = categoryMap[bronVal] || "Overig";
   await addDoc(collection(db,"users",user.uid,"items"),{
     soort:soortVal,
     bron:bronVal,
     datum:datumVal,
     bedrag:bedragVal,
+    categorie:categorie,
     recurring:recurringVal,
     created:Date.now()
   });
@@ -89,82 +94,75 @@ async function saveEntry(){
   loadData();
 }
 
-// ---------- FIXED COSTS ----------
+// --- Fixed Costs ---
 function saveFixedCosts(){
-  const costs = {
-    lening: parseFloat(leningInput.value)||0,
-    electriciteit: parseFloat(electriciteitInput.value)||0,
-    mobiliteit: parseFloat(mobiliteitInput.value)||0,
-    verzekering: parseFloat(verzekeringInput.value)||0
+  const costs={
+    lening:parseFloat(leningInput.value)||0,
+    electriciteit:parseFloat(electriciteitInput.value)||0,
+    mobiliteit:parseFloat(mobiliteitInput.value)||0,
+    verzekering:parseFloat(verzekeringInput.value)||0
   };
-  localStorage.setItem("fixedCosts", JSON.stringify(costs));
+  localStorage.setItem("fixedCosts",JSON.stringify(costs));
   closeFixedCosts();
   updateFixedCostsUI();
   loadData();
 }
 
 function updateFixedCostsUI(){
-  const costs = JSON.parse(localStorage.getItem("fixedCosts"))||{};
-  const keys = Object.keys(costs).filter(k=>costs[k]>0);
+  const costs=JSON.parse(localStorage.getItem("fixedCosts"))||{};
+  const keys=Object.keys(costs).filter(k=>costs[k]>0);
   if(keys.length===0) fixedCostsList.innerText="Geen vaste kosten ingesteld";
-  else fixedCostsList.innerHTML = keys.map(k=>`<span>${k.charAt(0).toUpperCase()+k.slice(1)}: € ${costs[k].toFixed(2)}</span>`).join("<br>");
+  else fixedCostsList.innerHTML=keys.map(k=>`<span>${k.charAt(0).toUpperCase()+k.slice(1)}: € ${costs[k].toFixed(2)}</span>`).join("<br>");
 }
 
-// ---------- SALDO & BUDGET ----------
+// --- Saldo UI ---
 function updateSaldoUI(saldo=0, spent=0){
-  // Vaste kosten
-  const costs = JSON.parse(localStorage.getItem("fixedCosts"))||{};
-  const totalFixed = Object.values(costs).reduce((a,b)=>a+b,0);
+  const costs=JSON.parse(localStorage.getItem("fixedCosts"))||{};
+  const totalFixed=Object.values(costs).reduce((a,b)=>a+b,0);
   const expectedEnd = saldo - totalFixed;
 
-  // Saldo
   saldoDiv.innerHTML = saldo>=0 ? `💰 € ${saldo.toFixed(2).replace(".",",")}` : `🔴 € ${saldo.toFixed(2).replace(".",",")}`;
-
-  // Verwacht einde maand
   expectedEndDiv.innerHTML = `🔮 Verwacht einde maand: € ${expectedEnd.toFixed(2).replace(".",",")}`;
 
-  // Budget progress bar
-  const budget = parseFloat(localStorage.getItem("monthlyBudget"));
-  if(budget){
-    const percent = Math.min((spent/budget)*100, 100);
-    saldoBar.style.width = percent+"%";
-  } else saldoBar.style.width = "0%";
+  const budget = parseFloat(localStorage.getItem("monthlyBudget"))||0;
+  const percent = budget>0 ? Math.min((spent/budget)*100,100) : 0;
+  saldoBar.style.width = percent+"%";
+  saldoBar.style.background = percent>=100 ? "#ef4444" : percent>=80 ? "#facc15" : "#22c55e";
 }
 
-// ---------- LOAD DATA ----------
+// --- Load Data ---
 async function loadData(){
-  const q = query(collection(db,"users",user.uid,"items"));
-  const snap = await getDocs(q);
+  const q=query(collection(db,"users",user.uid,"items"));
+  const snap=await getDocs(q);
 
   let saldo=0, spent=0;
-  const now = new Date();
+  const now=new Date();
   const m=now.getMonth(), y=now.getFullYear();
   const items=[];
 
   snap.forEach(doc=>{
     const e=doc.data();
-    saldo += e.bedrag;
-    const d = new Date(e.datum);
-    items.push({...e, datumObj:d});
-    if(e.bedrag<0 && d.getMonth()===m && d.getFullYear()===y) spent += Math.abs(e.bedrag);
+    saldo+=e.bedrag;
+    const d=new Date(e.datum);
+    items.push({...e,datumObj:d});
+    if(e.bedrag<0 && d.getMonth()===m && d.getFullYear()===y) spent+=Math.abs(e.bedrag);
   });
 
   window.items = items;
-
   updateFixedCostsUI();
-  updateSaldoUI(saldo, spent);
+  updateSaldoUI(saldo,spent);
   updateBudgetChart(items);
 }
 
-// ---------- KALENDER ----------
+// --- Calendar ---
 function buildCalendar(){
-  const calendar = document.getElementById("calendar");
+  const calendar=document.getElementById("calendar");
   calendar.innerHTML="";
-  const now = new Date();
+  const now=new Date();
   const year=now.getFullYear();
   const month=now.getMonth();
-  const firstDay = new Date(year,month,1).getDay();
-  const daysInMonth = new Date(year,month+1,0).getDate();
+  const firstDay=new Date(year,month,1).getDay();
+  const daysInMonth=new Date(year,month+1,0).getDate();
 
   for(let i=0;i<firstDay;i++) calendar.appendChild(document.createElement("div"));
 
@@ -180,14 +178,14 @@ function buildCalendar(){
 
     if(dayItems.length>0) dayDiv.classList.add("has");
 
-    dayDiv.addEventListener("click", ()=>{
+    dayDiv.addEventListener("click",()=>{
       dayTitle.innerText=`${d}/${month+1}/${year}`;
       dayList.innerHTML="";
       if(dayItems.length===0) dayList.innerHTML="<p>Geen bewegingen</p>";
       else dayItems.forEach(item=>{
         const p=document.createElement("div");
         p.className="entry "+(item.bedrag>=0?"pos":"neg");
-        const icon = item.bedrag>=0 ? "💵" : "💸";
+        const icon=item.bedrag>=0?"💵":"💸";
         p.innerText=`${icon} ${item.soort} - ${item.bron} : € ${item.bedrag.toFixed(2).replace(".",",")}`;
         dayList.appendChild(p);
       });
@@ -198,42 +196,34 @@ function buildCalendar(){
   }
 }
 
-// ---------- BUDGET CHART ----------
-let expenseChart = null;
+// --- Budget Chart ---
+let expenseChart=null;
 function updateBudgetChart(items){
-  const now = new Date();
+  const now=new Date();
   const m=now.getMonth(), y=now.getFullYear();
-  const categories = {};
+  const categories={};
   items.forEach(i=>{
-    const d = i.datumObj;
+    const d=i.datumObj;
     if(d.getMonth()===m && d.getFullYear()===y && i.bedrag<0){
-      if(!categories[i.bron]) categories[i.bron]=0;
-      categories[i.bron] += Math.abs(i.bedrag);
+      const cat = i.categorie || "Overig";
+      categories[cat] = (categories[cat]||0) + Math.abs(i.bedrag);
     }
   });
 
-  const ctx = document.getElementById("expenseChart").getContext("2d");
+  const ctx=document.getElementById("expenseChart").getContext("2d");
   if(expenseChart) expenseChart.destroy();
 
-  expenseChart = new Chart(ctx, {
+  expenseChart = new Chart(ctx,{
     type:'bar',
     data:{
       labels:Object.keys(categories),
-      datasets:[{
-        label:'Uitgaven per categorie',
-        data:Object.values(categories),
-        backgroundColor:'#ef4444'
-      }]
+      datasets:[{label:'Uitgaven per categorie',data:Object.values(categories),backgroundColor:'#ef4444'}]
     },
-    options:{
-      responsive:true,
-      plugins:{legend:{display:false}},
-      scales:{y:{beginAtZero:true}}
-    }
+    options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}
   });
 }
 
-// ---------- EVENT LISTENERS ----------
+// --- Event Listeners ---
 document.getElementById("addBtn").addEventListener("click", openModal);
 document.getElementById("closeModalBtn").addEventListener("click", closeModal);
 document.getElementById("saveEntryBtn").addEventListener("click", saveEntry);
