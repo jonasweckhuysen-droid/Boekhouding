@@ -29,10 +29,22 @@ const categoryMap = {
 
 // --- Auth ---
 const login = async () => {
-  try { const result = await signInWithPopup(auth, provider); window.user = result.user; loadData(); }
-  catch(e){console.error(e);alert("Login mislukt!");}
+  try { 
+    const result = await signInWithPopup(auth, provider); 
+    window.user = result.user; 
+    loadData(); 
+  } catch(e){
+    console.error(e);
+    alert("Login mislukt!");
+  }
 };
-onAuthStateChanged(auth,user=>{if(!user) login(); else {window.user=user; loadData();}});
+onAuthStateChanged(auth,user=>{
+  if(!user) login(); 
+  else {
+    window.user=user; 
+    loadData();
+  }
+});
 
 // --- Elements ---
 const modal=document.getElementById("modal");
@@ -121,27 +133,27 @@ async function saveEntry(){
   const categorie = categoryMap[bronVal] || "Overig";
 
   // --- Spaarpot update ---
-const savings = getSavings();
+  const savings = getSavings();
 
-if(savingsIndex !== ""){
-  const sIndex = parseInt(savingsIndex);
-  if(soortVal === "inkomst"){
-    // Voeg bedrag toe aan spaarpot
-    savings[sIndex].amount += bedragVal;
-    saveSavingsToStorage(savings);
-    updateSavingsUI();
-    updateSavingsListUI(); // ✅ realtime update
-    bedragVal = 0; 
-  } else {
-    // Haal bedrag van spaarpot (tot max van saldo spaarpot)
-    const spaarBedrag = Math.min(bedragVal, savings[sIndex].amount);
-    savings[sIndex].amount -= spaarBedrag;
-    saveSavingsToStorage(savings);
-    updateSavingsUI();
-    updateSavingsListUI(); // ✅ realtime update
-    bedragVal = bedragVal - spaarBedrag;
+  if(savingsIndex !== ""){
+    const sIndex = parseInt(savingsIndex);
+    if(soortVal === "inkomst"){
+      // Voeg bedrag toe aan spaarpot
+      savings[sIndex].amount += bedragVal;
+      saveSavingsToStorage(savings);
+      updateSavingsUI();
+      updateSavingsListUI();
+      bedragVal = 0; 
+    } else {
+      // Haal bedrag van spaarpot (tot max van saldo spaarpot)
+      const spaarBedrag = Math.min(bedragVal, savings[sIndex].amount);
+      savings[sIndex].amount -= spaarBedrag;
+      saveSavingsToStorage(savings);
+      updateSavingsUI();
+      updateSavingsListUI();
+      bedragVal = bedragVal - spaarBedrag;
+    }
   }
-}
 
   if(soortVal==="uitgave") bedragVal = -Math.abs(bedragVal);
 
@@ -219,6 +231,7 @@ async function loadData(){
   updateSaldoUI(saldo,spent);
   updateBudgetChart(items);
   updateSavingsUI();
+  updateSavingsListUI();
 }
 
 // --- Calendar ---
@@ -302,19 +315,21 @@ document.getElementById("saveFixedBtn").addEventListener("click", saveFixedCosts
 document.getElementById("themeToggle").addEventListener("click", ()=>document.body.classList.toggle("dark"));
 document.getElementById("closeDayBtn").addEventListener("click", closeDayModal);
 
-// --- Spaarpot helper functies om toe te voegen vanuit de console of UI ---
+// --- Spaarpot helper functies ---
 window.addSavings = (name, amount=0) => {
   const savings = getSavings();
   savings.push({name, amount});
   saveSavingsToStorage(savings);
   updateSavingsUI();
+  updateSavingsListUI();
 }
 window.deleteSavings = (index) => {
   const savings = getSavings();
   savings.splice(index,1);
   saveSavingsToStorage(savings);
   updateSavingsUI();
-    }
+  updateSavingsListUI();
+}
 
 // --- Spaarpot modal functies ---
 function openBeheerModal() {
@@ -338,22 +353,12 @@ function saveBeheer() {
   savings.push({ name, amount: target });
   saveSavingsToStorage(savings);
 
-  // Reset inputvelden
   document.getElementById("savingsName").value = "";
   document.getElementById("savingsTarget").value = "";
 
-  // Update dropdown en savings list
   updateSavingsUI();
   updateSavingsListUI();
 
-  closeBeheerModal();
-}
-  }
-
-  const savings = getSavings();
-  savings.push({name, amount: target});
-  saveSavingsToStorage(savings);
-  updateSavingsUI();
   closeBeheerModal();
 }
 
