@@ -76,7 +76,8 @@ import {
   getAuth,
   GoogleAuthProvider,
   signInWithPopup,
-  onAuthStateChanged
+  onAuthStateChanged,
+  signOut
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 const firebaseConfig = {
@@ -89,35 +90,38 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 
-// 👇 EXTRA BEVEILIGING
 const ALLOWED_EMAIL = "jonasweckhuysen@gmail.com";
 
-loginBtn.onclick = async () => {
-  try{
+// DOM ELEMENTEN
+const loginBtn = document.getElementById("loginBtn");
+const statusEl = document.getElementById("status");
+
+loginBtn.addEventListener("click", async () => {
+  try {
     await signInWithPopup(auth, provider);
-  }catch(err){
+  } catch (err) {
     alert("Inloggen mislukt");
     console.error(err);
   }
-};
+});
 
 onAuthStateChanged(auth, user => {
-  if(user){
-    if(user.email !== ALLOWED_EMAIL){
-      alert("Geen toegang tot deze applicatie");
-      auth.signOut();
-      return;
-    }
+  if (!user) return;
 
-    status.innerText = "Ingelogd als: " + user.email;
-
-    // ⏩ DOORSTUREN
-    setTimeout(()=>{
-      window.location.href = "app.html";
-    }, 800);
+  if (user.email !== ALLOWED_EMAIL) {
+    alert("Geen toegang tot deze applicatie");
+    signOut(auth);
+    return;
   }
+
+  statusEl.innerText = "Ingelogd als: " + user.email;
+
+  setTimeout(() => {
+    window.location.href = "app.html";
+  }, 800);
 });
 </script>
+
 
 </body>
 </html>
