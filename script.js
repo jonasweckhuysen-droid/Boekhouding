@@ -1,8 +1,7 @@
-// 🔥 Firebase
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// ⚠️ VUL JE EIGEN CONFIG IN
+// 🔥 Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyAkBAw17gNU_EBhn8dKgyY5qv-ecfWaG2s",
   authDomain: "finance-jonas.firebaseapp.com",
@@ -16,165 +15,49 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// DATA
-let transactions = [];
-let fixedCosts = [];
-let goals = [];
-let chart;
+// 🧠 DOM READY
+document.addEventListener("DOMContentLoaded", () => {
 
-// 🧠 HULPFUNCTIE
-const $ = id => document.getElementById(id);
+  const addBtn = document.getElementById("addBtn");
+  const modal = document.getElementById("modal");
+  const saveBtn = document.getElementById("saveBtn");
+  const closeBtn = document.getElementById("closeBtn");
+  const soort = document.getElementById("soort");
+  const bedrag = document.getElementById("bedrag");
+  const saldoDiv = document.getElementById("saldo");
+  const expectedEndDiv = document.getElementById("expectedEnd");
 
-// ===============================
-// TRANSACTIE TOEVOEGEN
-// ===============================
-window.addTransaction = async () => {
-  const type = $("type").value;
-  const bron = $("bron").value;
-  const bedrag = Number($("bedrag").value);
-  const categorie = $("categorie").value;
+  let items = [];
 
-  if (!bedrag || !categorie) {
-    alert("Vul bedrag en categorie in");
-    return;
-  }
-
-  const t = {
-    type,
-    bron,
-    bedrag,
-    categorie,
-    datum: new Date()
-  };
-
-  await addDoc(collection(db, "transactions"), t);
-  transactions.push(t);
-
-  $("bedrag").value = "";
-  $("categorie").value = "";
-
-  updateUI();
-};
-
-// ===============================
-// VASTE KOST TOEVOEGEN
-// ===============================
-window.addFixedCost = async () => {
-  const name = $("fixedName").value;
-  const amount = Number($("fixedAmount").value);
-
-  if (!name || !amount) {
-    alert("Vul naam en bedrag in");
-    return;
-  }
-
-  const c = { name, amount };
-
-  await addDoc(collection(db, "fixedCosts"), c);
-  fixedCosts.push(c);
-
-  $("fixedName").value = "";
-  $("fixedAmount").value = "";
-
-  renderFixed();
-  updateUI();
-};
-
-// ===============================
-// SPAARDOEL TOEVOEGEN
-// ===============================
-window.addGoal = async () => {
-  const name = $("goalName").value;
-  const target = Number($("goalTarget").value);
-
-  if (!name || !target) {
-    alert("Vul doel en bedrag in");
-    return;
-  }
-
-  const g = { name, target, saved: 0 };
-
-  await addDoc(collection(db, "goals"), g);
-  goals.push(g);
-
-  $("goalName").value = "";
-  $("goalTarget").value = "";
-
-  renderGoals();
-};
-
-// ===============================
-// UI UPDATES
-// ===============================
-function updateUI() {
-  const income = transactions
-    .filter(t => t.type === "inkomst")
-    .reduce((a, b) => a + b.bedrag, 0);
-
-  const expense = transactions
-    .filter(t => t.type === "uitgave")
-    .reduce((a, b) => a + b.bedrag, 0);
-
-  const fixed = fixedCosts.reduce((a, b) => a + b.amount, 0);
-
-  const expected = income - expense - fixed;
-  $("expectedTotal").textContent = expected.toFixed(2);
-
-  $("balanceBar").value = income > 0
-    ? Math.max(0, Math.min(100, (expected / income) * 100))
-    : 0;
-
-  renderChart();
-}
-
-// ===============================
-// VASTE KOSTEN RENDEREN
-// ===============================
-function renderFixed() {
-  $("fixedList").innerHTML = "";
-  fixedCosts.forEach(c => {
-    $("fixedList").innerHTML += `
-      <div class="list-item">
-        ${c.name}
-        <strong>€${c.amount}</strong>
-      </div>`;
+  addBtn.addEventListener("click", () => {
+    modal.style.display = "block";
   });
-}
 
-// ===============================
-// SPAARDOELEN RENDEREN
-// ===============================
-function renderGoals() {
-  $("goalList").innerHTML = "";
-  goals.forEach(g => {
-    $("goalList").innerHTML += `
-      <div class="list-item">
-        ${g.name}
-        <strong>€${g.saved} / €${g.target}</strong>
-      </div>`;
+  closeBtn.addEventListener("click", () => {
+    modal.style.display = "none";
   });
-}
 
-// ===============================
-// GRAFIEK
-// ===============================
-function renderChart() {
-  const data = {};
-  transactions
-    .filter(t => t.type === "uitgave")
-    .forEach(t => {
-      data[t.categorie] = (data[t.categorie] || 0) + t.bedrag;
-    });
+  saveBtn.addEventListener("click", async () => {
+    const bedragVal = Number(bedrag.value);
+    if (!bedragVal) return alert("Vul bedrag in");
 
-  if (chart) chart.destroy();
+    const item = {
+      soort: soort.value,
+      bedrag: soort.value === "uitgave" ? -bedragVal : bedragVal,
+      datum: Date.now()
+    };
 
-  chart = new Chart($("chart"), {
-    type: "pie",
-    data: {
-      labels: Object.keys(data),
-      datasets: [{
-        data: Object.values(data)
-      }]
-    }
+    await addDoc(collection(db, "items"), item);
+    items.push(item);
+
+    bedrag.value = "";
+    modal.style.display = "none";
+    updateUI();
   });
-}
+
+  function updateUI() {
+    const saldo = items.reduce((s, i) => s + i.bedrag, 0);
+    saldoDiv.innerText = `€ ${saldo.toFixed(2)}`;
+    expectedEndDiv.innerText = `€ ${(saldo - 100).toFixed(2)}`;
+  }
+});
