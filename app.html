@@ -187,4 +187,35 @@ text-align:center;font-weight:500;"></div>
   </div>
   </div>
 </body>
+  <script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAkBAw17gNU_EBhn8dKgyY5qv-ecfWaG2s",
+  authDomain: "finance-jonas.firebaseapp.com",
+  projectId: "finance-jonas",
+  storageBucket: "finance-jonas.firebasestorage.app",
+  messagingSenderId: "497182804753",
+  appId: "1:497182804753:web:ea942a578dd1c15f631ab0",
+  measurementId: "G-0J29T1Z7MV"
+};
+
+window.firebaseApp = initializeApp(firebaseConfig);
+window.auth = getAuth(firebaseApp);
+window.db = getFirestore(firebaseApp);
+
+onAuthStateChanged(auth, user => {
+  if (!user) {
+    window.location.href = "index.html"; // loginpagina
+  } else {
+    window.user = user;
+    loadData(); // BELANGRIJK
+  }
+});
+</script>
+
+<script src="script.js"></script>
+
 </html>
