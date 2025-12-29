@@ -1,4 +1,4 @@
-const CACHE_NAME = "boekhouding-v2";
+const CACHE_NAME = "boekhouding-v3";
 
 const FILES_TO_CACHE = [
   "/Boekhouding/",
@@ -8,8 +8,7 @@ const FILES_TO_CACHE = [
   "/Boekhouding/script.js",
   "/Boekhouding/manifest.json",
   "/Boekhouding/icons/icon-192.png",
-  "/Boekhouding/icons/icon-512.png",
-  "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+  "/Boekhouding/icons/icon-512.png"
 ];
 
 self.addEventListener("install", event => {
@@ -29,6 +28,19 @@ self.addEventListener("activate", event => {
 });
 
 self.addEventListener("fetch", event => {
+  const url = event.request.url;
+
+  // 🚫 Firebase & Google auth NOOIT cachen
+  if (
+    url.includes("google.com") ||
+    url.includes("firebaseapp.com") ||
+    url.includes("gstatic.com")
+  ) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
+  // ✅ App files wel cachen
   event.respondWith(
     caches.match(event.request).then(response => response || fetch(event.request))
   );
