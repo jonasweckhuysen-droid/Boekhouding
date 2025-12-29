@@ -38,14 +38,25 @@ onAuthStateChanged(auth,user=>{if(!user) login(); else {window.user=user; loadDa
 const modal=document.getElementById("modal");
 const dayModal=document.getElementById("dayModal");
 const fixedCostsModal=document.getElementById("fixedCostsModal");
-const savingsModal=document.getElementById("savingsModal");
 
 const soort=document.getElementById("soort");
 const bron=document.getElementById("bron");
 const datum=document.getElementById("datum");
 const bedrag=document.getElementById("bedrag");
 const recurring=document.getElementById("recurring");
-const saveToSavings=document.getElementById("saveToSavings");
+
+// Spaarpot dropdown
+let saveToSavings;
+if(!document.getElementById("saveToSavings")) {
+  const select = document.createElement("select");
+  select.id="saveToSavings";
+  const defaultOption = document.createElement("option");
+  defaultOption.value="";
+  defaultOption.innerText="Geen spaarpot";
+  select.appendChild(defaultOption);
+  document.querySelector("#modal .box").insertBefore(select, document.querySelector("#modal .box div:last-child"));
+}
+saveToSavings=document.getElementById("saveToSavings");
 
 const saldoDiv=document.getElementById("saldo");
 const saldoBar=document.getElementById("saldoBar");
@@ -59,15 +70,29 @@ const electriciteitInput=document.getElementById("electriciteitInput");
 const mobiliteitInput=document.getElementById("mobiliteitInput");
 const verzekeringInput=document.getElementById("verzekeringInput");
 
-const savingsList=document.getElementById("savingsList");
-const savingsBtn=document.getElementById("savingsBtn");
-const savingsName=document.getElementById("savingsName");
-const savingsTarget=document.getElementById("savingsTarget");
-const saveSavingsBtn=document.getElementById("saveSavingsBtn");
-const closeSavingsBtn=document.getElementById("closeSavingsBtn");
+// --- Spaarpotten ---
+function getSavings(){ return JSON.parse(localStorage.getItem("savings"))||[]; }
+function saveSavingsToStorage(s){ localStorage.setItem("savings",JSON.stringify(s)); }
+function updateSavingsUI(){
+  const savings = getSavings();
+  saveToSavings.innerHTML="";
+  const defaultOption = document.createElement("option");
+  defaultOption.value="";
+  defaultOption.innerText="Geen spaarpot";
+  saveToSavings.appendChild(defaultOption);
+  savings.forEach((s,i)=>{
+    const opt = document.createElement("option");
+    opt.value=i;
+    opt.innerText=`${s.name}: € ${s.amount.toFixed(2)}`;
+    saveToSavings.appendChild(opt);
+  });
+}
 
 // --- Modals ---
-function openModal(){ modal.style.display="flex"; updateSavingsDropdown(); }
+function openModal(){ 
+  modal.style.display="flex"; 
+  updateSavingsUI();
+}
 function closeModal(){ modal.style.display="none"; }
 function openDayModal(){ dayModal.style.display="flex"; }
 function closeDayModal(){ dayModal.style.display="none"; }
@@ -81,63 +106,40 @@ function openFixedCosts(){
 }
 function closeFixedCosts(){ fixedCostsModal.style.display="none"; }
 
-function openSavingsModal(){
-  savingsModal.style.display="flex";
-  savingsName.value="";
-  savingsTarget.value="";
-}
-function closeSavingsModal(){ savingsModal.style.display="none"; }
-
-// --- Spaarpotten ---
-function getSavings(){ return JSON.parse(localStorage.getItem("savings"))||[]; }
-function saveSavingsToStorage(savings){ localStorage.setItem("savings",JSON.stringify(savings)); }
-
-function updateSavingsUI(){
-  const savings=getSavings();
-  if(savings.length===0) savingsList.innerText="Geen spaarpotjes ingesteld";
-  else savingsList.innerHTML = savings.map(s=>`<span>${s.name}: € ${s.amount.toFixed(2)} / € ${s.target.toFixed(2)}</span>`).join("<br>");
-}
-
-function updateSavingsDropdown(){
-  const savings=getSavings();
-  saveToSavings.innerHTML='<option value="">💾 Niet naar spaarpot</option>';
-  savings.forEach((s,i)=>saveToSavings.innerHTML += `<option value="${i}">${s.name}</option>`);
-}
-
-function saveSavingsGoal(){
-  const name=savingsName.value.trim();
-  const target=parseFloat(savingsTarget.value);
-  if(!name||isNaN(target)){ alert("Vul naam en doelbedrag in"); return;}
-  const savings=getSavings();
-  savings.push({name,target,amount:0});
-  saveSavingsToStorage(savings);
-  updateSavingsUI();
-  closeSavingsModal();
-}
-
-// --- Save Entry ---
+// --- Save Entry (met spaarpotten) ---
 async function saveEntry(){
   const soortVal=soort.value;
   const bronVal=bron.value;
   const datumVal=datum.value;
-  const bedragVal=parseFloat(bedrag.value)*(soortVal==="uitgave"?-1:1);
+  let bedragVal=parseFloat(bedrag.value);
+  if(isNaN(bedragVal)){ alert("Vul een geldig bedrag in"); return; }
+
   const recurringVal=recurring.checked;
   const savingsIndex = saveToSavings.value;
 
-  if(!datumVal||isNaN(bedragVal)){alert("Vul alles in"); return;}
+  if(!datumVal){alert("Vul een datum in"); return;}
   const categorie = categoryMap[bronVal] || "Overig";
 
-  // Update spaarpot als gekozen
+  // --- Spaarpot update ---
+  const savings = getSavings();
+
   if(savingsIndex!==""){
-    const savings=getSavings();
+    const sIndex = parseInt(savingsIndex);
     if(soortVal==="inkomst"){
-      savings[savingsIndex].amount += bedragVal;
+      savings[sIndex].amount += bedragVal;
       saveSavingsToStorage(savings);
       updateSavingsUI();
+      bedragVal = 0; 
     } else {
-      alert("Uitgaven kunnen niet direct naar spaarpotten worden geboekt.");
+      const spaarBedrag = Math.min(bedragVal, savings[sIndex].amount);
+      savings[sIndex].amount -= spaarBedrag;
+      saveSavingsToStorage(savings);
+      updateSavingsUI();
+      bedragVal = bedragVal - spaarBedrag;
     }
   }
+
+  if(soortVal==="uitgave") bedragVal = -Math.abs(bedragVal);
 
   await addDoc(collection(db,"users",user.uid,"items"),{
     soort:soortVal,
@@ -146,8 +148,10 @@ async function saveEntry(){
     bedrag:bedragVal,
     categorie:categorie,
     recurring:recurringVal,
+    savingsIndex: savingsIndex!=="" ? parseInt(savingsIndex) : null,
     created:Date.now()
   });
+
   closeModal();
   loadData();
 }
@@ -170,7 +174,7 @@ function updateFixedCostsUI(){
   const costs=JSON.parse(localStorage.getItem("fixedCosts"))||{};
   const keys=Object.keys(costs).filter(k=>costs[k]>0);
   if(keys.length===0) fixedCostsList.innerText="Geen vaste kosten ingesteld";
-  else fixedCostsList.innerHTML=keys.map(k=>`${k.charAt(0).toUpperCase()+k.slice(1)}: € ${costs[k].toFixed(2)}`).join("<br>");
+  else fixedCostsList.innerHTML=keys.map(k=>`<span>${k.charAt(0).toUpperCase()+k.slice(1)}: € ${costs[k].toFixed(2)}</span>`).join("<br>");
 }
 
 // --- Saldo UI ---
@@ -208,9 +212,9 @@ async function loadData(){
 
   window.items = items;
   updateFixedCostsUI();
-  updateSavingsUI();
   updateSaldoUI(saldo,spent);
   updateBudgetChart(items);
+  updateSavingsUI();
 }
 
 // --- Calendar ---
@@ -245,7 +249,8 @@ function buildCalendar(){
         const p=document.createElement("div");
         p.className="entry "+(item.bedrag>=0?"pos":"neg");
         const icon=item.bedrag>=0?"💵":"💸";
-        p.innerText=`${icon} ${item.soort} - ${item.bron} : € ${item.bedrag.toFixed(2).replace(".",",")}`;
+        let spaarTxt = item.savingsIndex!==null ? " (Spaarpot)" : "";
+        p.innerText=`${icon} ${item.soort} - ${item.bron} : € ${item.bedrag.toFixed(2).replace(".",",")}${spaarTxt}`;
         dayList.appendChild(p);
       });
       openDayModal();
@@ -293,6 +298,16 @@ document.getElementById("saveFixedBtn").addEventListener("click", saveFixedCosts
 document.getElementById("themeToggle").addEventListener("click", ()=>document.body.classList.toggle("dark"));
 document.getElementById("closeDayBtn").addEventListener("click", closeDayModal);
 
-savingsBtn.addEventListener("click", openSavingsModal);
-saveSavingsBtn.addEventListener("click", saveSavingsGoal);
-closeSavingsBtn.addEventListener("click", closeSavingsModal);
+// --- Spaarpot helper functies om toe te voegen vanuit de console of UI ---
+window.addSavings = (name, amount=0) => {
+  const savings = getSavings();
+  savings.push({name, amount});
+  saveSavingsToStorage(savings);
+  updateSavingsUI();
+}
+window.deleteSavings = (index) => {
+  const savings = getSavings();
+  savings.splice(index,1);
+  saveSavingsToStorage(savings);
+  updateSavingsUI();
+}
