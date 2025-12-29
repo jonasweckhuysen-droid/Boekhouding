@@ -1,22 +1,13 @@
-let db;
+import {
+  collection,
+  addDoc,
+  getDocs,
+  query
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // =====================
-// DATABASE
+// MODALS
 // =====================
-const request = indexedDB.open("BoekhoudingDB", 1);
-
-request.onupgradeneeded = e => {
-  db = e.target.result;
-  if (!db.objectStoreNames.contains("items")) {
-    db.createObjectStore("items", { keyPath: "id", autoIncrement: true });
-  }
-};
-
-request.onsuccess = e => {
-  db = e.target.result;
-  loadData();
-};
-
 function openModal(){ modal.style.display="flex"; }
 function closeModal(){ modal.style.display="none"; }
 
@@ -44,59 +35,69 @@ function saveBudget(){
 }
 
 // =====================
-// OPSLAAN
+// OPSLAAN (FIREBASE)
 // =====================
-function saveEntry(){
-  const soort = soort.value;
-  const bron = bron.value;
-  const datum = datum.value;
-  const bedrag = parseFloat(bedrag.value) * (soort==="uitgave"?-1:1);
-  const recurring = recurring.checked;
+async function saveEntry(){
+  const soortVal = soort.value;
+  const bronVal = bron.value;
+  const datumVal = datum.value;
+  const bedragVal = parseFloat(bedrag.value) * (soortVal==="uitgave"?-1:1);
+  const recurringVal = recurring.checked;
 
-  if(!datum || isNaN(bedrag)){
+  if(!datumVal || isNaN(bedragVal)){
     alert("Vul alles in");
     return;
   }
 
-  const tx = db.transaction("items","readwrite");
-  tx.objectStore("items").add({soort,bron,datum,bedrag,recurring});
-  tx.oncomplete = ()=>{
-    closeModal();
-    loadData();
-  };
+  await addDoc(
+    collection(db, "users", user.uid, "items"),
+    {
+      soort: soortVal,
+      bron: bronVal,
+      datum: datumVal,
+      bedrag: bedragVal,
+      recurring: recurringVal,
+      created: Date.now()
+    }
+  );
+
+  closeModal();
+  loadData();
 }
 
 // =====================
 // SALDO + BUDGET CHECK
 // =====================
-function loadData(){
-  const tx = db.transaction("items","readonly");
-  const req = tx.objectStore("items").getAll();
+async function loadData(){
+  const q = query(collection(db, "users", user.uid, "items"));
+  const snap = await getDocs(q);
 
-  req.onsuccess = ()=>{
-    const data = req.result;
-    let saldo = 0;
-    let uitgavenDezeMaand = 0;
+  let saldo = 0;
+  let uitgavenDezeMaand = 0;
 
-    const now = new Date();
-    const m = now.getMonth();
-    const y = now.getFullYear();
+  const now = new Date();
+  const m = now.getMonth();
+  const y = now.getFullYear();
 
-    data.forEach(e=>{
-      saldo += e.bedrag;
-      const d = new Date(e.datum);
-      if(e.bedrag < 0 && d.getMonth()===m && d.getFullYear()===y){
-        uitgavenDezeMaand += Math.abs(e.bedrag);
-      }
-    });
+  snap.forEach(doc=>{
+    const e = doc.data();
+    saldo += e.bedrag;
 
-    document.getElementById("saldo").innerText =
-      "€ " + saldo.toFixed(2).replace(".",",");
+    const d = new Date(e.datum);
+    if(e.bedrag < 0 && d.getMonth()===m && d.getFullYear()===y){
+      uitgavenDezeMaand += Math.abs(e.bedrag);
+    }
+  });
 
-    updateBudgetUI(uitgavenDezeMaand);
-  };
+  document.getElementById("saldo").innerText =
+    "€ " + saldo.toFixed(2).replace(".",",");
+
+  updateBudgetUI(uitgavenDezeMaand);
 }
 
+// =====================
+// BUDGET UI
+// =====================
 function updateBudgetUI(spent=0){
   const budget = parseFloat(localStorage.getItem("monthlyBudget"));
   const label = document.getElementById("budgetAmount");
