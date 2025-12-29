@@ -1,4 +1,4 @@
-const CACHE_NAME = "boekhouding-v3";
+const CACHE_NAME = "boekhouding-v4";
 
 const FILES_TO_CACHE = [
   "/Boekhouding/",
@@ -30,17 +30,18 @@ self.addEventListener("activate", event => {
 self.addEventListener("fetch", event => {
   const url = event.request.url;
 
-  // 🚫 Firebase & Google auth NOOIT cachen
+  // 🚫 FIREBASE AUTH MOET ALTIJD NETWERK ZIJN
   if (
+    url.includes("/__/auth/") ||
     url.includes("google.com") ||
-    url.includes("firebaseapp.com") ||
-    url.includes("gstatic.com")
+    url.includes("gstatic.com") ||
+    url.includes("firebaseapp.com")
   ) {
     event.respondWith(fetch(event.request));
     return;
   }
 
-  // ✅ App files wel cachen
+  // ✅ APP FILES
   event.respondWith(
     caches.match(event.request).then(response => response || fetch(event.request))
   );
