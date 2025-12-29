@@ -1,88 +1,123 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Meneige boekhouding</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meneige boekhouding – Login</title>
 
 <!-- PWA -->
 <link rel="manifest" href="/Boekhouding/manifest.json">
 <meta name="theme-color" content="#2563eb">
 
-<!-- CSS -->
-<link rel="stylesheet" href="style.css">
+<!-- Icons -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 <style>
-  body { font-family: 'Segoe UI', sans-serif; margin:0; background:#f5f5f5; }
-  header { background:#2563eb; color:white; padding:20px; text-align:center; border-bottom:5px solid #1e40af; }
-  header h1 { margin:0; font-size:24px; }
-  #saldoBox { margin-top:10px; font-size:20px; }
-  main { padding:20px; max-width:600px; margin:auto; }
-  .btn-group button { margin:5px; padding:10px 15px; font-size:16px; border:none; border-radius:6px; cursor:pointer; }
-  .btn-primary { background:#10b981; color:white; }
-  .btn-secondary { background:#f59e0b; color:white; }
-  .modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); justify-content:center; align-items:center; z-index:1000; }
-  .modalContent { background:white; padding:20px; border-radius:10px; width:90%; max-width:400px; }
-  .modalContent input, .modalContent select { width:100%; padding:8px; margin:5px 0 15px 0; border-radius:5px; border:1px solid #ccc; }
-  .entries { margin-top:20px; }
-  .entry { padding:10px; margin-bottom:5px; border-radius:6px; display:flex; justify-content:space-between; align-items:center; color:white; }
-  .entry.inkomst { background:#10b981; }
-  .entry.uitgave { background:#ef4444; }
-  .entry button { background:#f3f4f6; color:black; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; }
-  #search { width:100%; padding:8px; margin-bottom:15px; border-radius:5px; border:1px solid #ccc; }
+body{
+  margin:0;
+  font-family:'Segoe UI',sans-serif;
+  background:linear-gradient(135deg,#dbeafe,#f0f9ff);
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+.loginBox{
+  background:white;
+  padding:30px;
+  border-radius:16px;
+  width:90%;
+  max-width:380px;
+  text-align:center;
+  box-shadow:0 15px 40px rgba(0,0,0,.15);
+}
+.loginBox h1{
+  margin-top:0;
+  color:#1e3a8a;
+}
+.loginBtn{
+  background:#2563eb;
+  color:white;
+  border:none;
+  padding:14px;
+  width:100%;
+  border-radius:12px;
+  font-size:16px;
+  cursor:pointer;
+}
+.loginBtn i{
+  margin-right:8px;
+}
+.status{
+  margin-top:15px;
+  font-size:14px;
+  color:#64748b;
+}
 </style>
 </head>
 
 <body>
 
-<header>
-  <h1><i class="fas fa-wallet"></i> Meneige boekhouding</h1>
-  <div id="saldoBox">€ 0,00</div>
-</header>
+<div class="loginBox">
+  <h1><i class="fas fa-wallet"></i><br>Meneige boekhouding</h1>
+  <p>Beveiligde toegang</p>
 
-<main>
-  <div class="btn-group">
-    <button class="btn-primary" onclick="openModal()"><i class="fas fa-plus-circle"></i> Nieuwe Invoer</button>
-  </div>
+  <button class="loginBtn" id="loginBtn">
+    <i class="fab fa-google"></i> Inloggen met Google
+  </button>
 
-  <input type="text" id="search" placeholder="🔍 Zoeken op bron..." oninput="filterEntries()">
-
-  <div class="entries" id="entriesList"></div>
-</main>
-
-<!-- Modal -->
-<div class="modal" id="modal">
-  <div class="modalContent">
-    <h2>Nieuwe Invoer</h2>
-
-    <label>Soort:</label>
-    <select id="soort">
-      <option value="inkomst">Inkomst</option>
-      <option value="uitgave">Uitgave</option>
-    </select>
-
-    <label>Van / Naar:</label>
-    <input type="text" id="bron" placeholder="Bijv. Loon / Colruyt">
-
-    <label>Datum:</label>
-    <input type="date" id="datum">
-
-    <label>Bedrag:</label>
-    <input type="number" id="bedrag" placeholder="Bijv. 1200.00">
-
-    <label>
-      <input type="checkbox" id="recurring">
-      Terugkerende maandelijkse kost
-    </label>
-
-    <div style="text-align:right;">
-      <button class="btn-secondary" onclick="closeModal()">Annuleren</button>
-      <button class="btn-primary" onclick="saveEntry()">Opslaan</button>
-    </div>
-  </div>
+  <div class="status" id="status">Niet ingelogd</div>
 </div>
 
-<script src="script.js"></script>
+<!-- FIREBASE LOGIN -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getAuth,
+  GoogleAuthProvider,
+  signInWithPopup,
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAkBAw17gNU_EBhn8dKgyY5qv-ecfWaG2s",
+  authDomain: "finance-jonas.firebaseapp.com",
+  projectId: "finance-jonas",
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const provider = new GoogleAuthProvider();
+
+// 👇 EXTRA BEVEILIGING
+const ALLOWED_EMAIL = "jonasweckhuysen@gmail.com";
+
+loginBtn.onclick = async () => {
+  try{
+    await signInWithPopup(auth, provider);
+  }catch(err){
+    alert("Inloggen mislukt");
+    console.error(err);
+  }
+};
+
+onAuthStateChanged(auth, user => {
+  if(user){
+    if(user.email !== ALLOWED_EMAIL){
+      alert("Geen toegang tot deze applicatie");
+      auth.signOut();
+      return;
+    }
+
+    status.innerText = "Ingelogd als: " + user.email;
+
+    // ⏩ DOORSTUREN
+    setTimeout(()=>{
+      window.location.href = "app.html";
+    }, 800);
+  }
+});
+</script>
+
 </body>
 </html>
