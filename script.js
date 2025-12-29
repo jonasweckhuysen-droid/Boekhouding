@@ -9,29 +9,32 @@ request.onupgradeneeded = function (event) {
   db = event.target.result;
 
   if (!db.objectStoreNames.contains("boekhouding")) {
-    db.createObjectStore("boekhouding", { keyPath: "id", autoIncrement: true });
+    db.createObjectStore("boekhouding", {
+      keyPath: "id",
+      autoIncrement: true
+    });
   }
 };
 
 request.onsuccess = function (event) {
   db = event.target.result;
-  applyRecurring();  
+  applyRecurring();
   loadData();
 };
 
 request.onerror = function () {
-  console.error("IndexedDB kon niet geopend worden");
+  console.error("❌ IndexedDB kon niet geopend worden");
 };
 
 // =====================
 // MODAL
 // =====================
 function openModal() {
-  document.getElementById("modal").classList.remove("modalHidden");
+  document.getElementById("modal").style.display = "flex";
 }
 
 function closeModal() {
-  document.getElementById("modal").classList.add("modalHidden");
+  document.getElementById("modal").style.display = "none";
 }
 
 // =====================
@@ -55,23 +58,26 @@ function saveEntry() {
   }
 
   const soort = document.getElementById("soort").value;
+  const bron = document.getElementById("bron").value.trim();
   const datum = document.getElementById("datum").value;
   const bedragRaw = parseFloat(document.getElementById("bedrag").value);
-  const type = document.getElementById("type").value;
   const recurring = document.getElementById("recurring").checked;
 
-  if (!datum || isNaN(bedragRaw)) {
-    alert("Gelieve alle velden in te vullen");
+  if (!datum || isNaN(bedragRaw) || bron === "") {
+    alert("Gelieve alle velden correct in te vullen");
     return;
   }
 
-  const bedrag = soort === "uitgave" ? -Math.abs(bedragRaw) : Math.abs(bedragRaw);
+  const bedrag =
+    soort === "uitgave"
+      ? -Math.abs(bedragRaw)
+      : Math.abs(bedragRaw);
 
   const entry = {
     soort,
+    bron,
     datum,
     bedrag,
-    type,
     recurring
   };
 
@@ -81,8 +87,19 @@ function saveEntry() {
 
   transaction.oncomplete = function () {
     closeModal();
+    clearForm();
     loadData();
   };
+}
+
+// =====================
+// FORM RESET
+// =====================
+function clearForm() {
+  document.getElementById("bron").value = "";
+  document.getElementById("datum").value = "";
+  document.getElementById("bedrag").value = "";
+  document.getElementById("recurring").checked = false;
 }
 
 // =====================
@@ -96,16 +113,15 @@ function loadData() {
   const request = store.getAll();
 
   request.onsuccess = function () {
-    const data = request.result;
-    updateSaldo(data);
+    updateSaldo(request.result);
   };
 }
 
 function updateSaldo(data) {
   let total = 0;
 
-  data.forEach(e => {
-    total += e.bedrag;
+  data.forEach(entry => {
+    total += entry.bedrag;
   });
 
   document.getElementById("saldo").innerText =
@@ -126,7 +142,7 @@ function applyRecurring() {
   request.onsuccess = function () {
     const entries = request.result;
     const now = new Date();
-    let newOnes = [];
+    let newEntries = [];
 
     entries.forEach(entry => {
       if (entry.recurring) {
@@ -134,22 +150,24 @@ function applyRecurring() {
 
         while (
           lastDate.getFullYear() < now.getFullYear() ||
-          (lastDate.getFullYear() === now.getFullYear() &&
-            lastDate.getMonth() < now.getMonth())
+          (
+            lastDate.getFullYear() === now.getFullYear() &&
+            lastDate.getMonth() < now.getMonth()
+          )
         ) {
           lastDate.setMonth(lastDate.getMonth() + 1);
 
-          newOnes.push({
+          newEntries.push({
             soort: entry.soort,
+            bron: entry.bron,
             datum: lastDate.toISOString().split("T")[0],
             bedrag: entry.bedrag,
-            type: entry.type,
             recurring: true
           });
         }
       }
     });
 
-    newOnes.forEach(n => store.add(n));
+    newEntries.forEach(e => store.add(e));
   };
 }
