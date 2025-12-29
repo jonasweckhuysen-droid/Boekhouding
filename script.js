@@ -1,85 +1,129 @@
 let db;
-const request = indexedDB.open("BoekhoudingDB",1);
 
-request.onupgradeneeded=e=>{
-  db=e.target.result;
-  db.createObjectStore("items",{keyPath:"id",autoIncrement:true});
+// =====================
+// DATABASE
+// =====================
+const request = indexedDB.open("BoekhoudingDB", 1);
+
+request.onupgradeneeded = e => {
+  db = e.target.result;
+  if (!db.objectStoreNames.contains("items")) {
+    db.createObjectStore("items", { keyPath: "id", autoIncrement: true });
+  }
 };
-request.onsuccess=e=>{
-  db=e.target.result;
+
+request.onsuccess = e => {
+  db = e.target.result;
   loadData();
-  buildCalendar();
 };
 
-function openModal(){modal.style.display="flex"}
-function closeModal(){modal.style.display="none"}
-function closeDay(){dayModal.style.display="none"}
+function openModal(){ modal.style.display="flex"; }
+function closeModal(){ modal.style.display="none"; }
 
+// =====================
+// BUDGET
+// =====================
+function openBudget(){
+  budgetModal.style.display="flex";
+  budgetInput.value = localStorage.getItem("monthlyBudget") || "";
+}
+
+function closeBudget(){
+  budgetModal.style.display="none";
+}
+
+function saveBudget(){
+  const val = parseFloat(budgetInput.value);
+  if(isNaN(val) || val <= 0){
+    alert("Geef een geldig bedrag in");
+    return;
+  }
+  localStorage.setItem("monthlyBudget", val);
+  closeBudget();
+  updateBudgetUI();
+}
+
+// =====================
+// OPSLAAN
+// =====================
 function saveEntry(){
-  const soort=soort.value;
-  const bron=bron.value;
-  const datum=datum.value;
-  const bedrag=parseFloat(bedrag.value)*(soort==="uitgave"?-1:1);
-  const recurring=recurring.checked;
+  const soort = soort.value;
+  const bron = bron.value;
+  const datum = datum.value;
+  const bedrag = parseFloat(bedrag.value) * (soort==="uitgave"?-1:1);
+  const recurring = recurring.checked;
 
-  const tx=db.transaction("items","readwrite");
+  if(!datum || isNaN(bedrag)){
+    alert("Vul alles in");
+    return;
+  }
+
+  const tx = db.transaction("items","readwrite");
   tx.objectStore("items").add({soort,bron,datum,bedrag,recurring});
-  tx.oncomplete=()=>{
+  tx.oncomplete = ()=>{
     closeModal();
     loadData();
-    buildCalendar();
-  }
+  };
 }
 
+// =====================
+// SALDO + BUDGET CHECK
+// =====================
 function loadData(){
-  const tx=db.transaction("items","readonly");
-  const req=tx.objectStore("items").getAll();
-  req.onsuccess=()=>{
-    let total=0;
-    req.result.forEach(e=>total+=e.bedrag);
-    saldo.innerText="€ "+total.toFixed(2).replace(".",",");
+  const tx = db.transaction("items","readonly");
+  const req = tx.objectStore("items").getAll();
+
+  req.onsuccess = ()=>{
+    const data = req.result;
+    let saldo = 0;
+    let uitgavenDezeMaand = 0;
+
+    const now = new Date();
+    const m = now.getMonth();
+    const y = now.getFullYear();
+
+    data.forEach(e=>{
+      saldo += e.bedrag;
+      const d = new Date(e.datum);
+      if(e.bedrag < 0 && d.getMonth()===m && d.getFullYear()===y){
+        uitgavenDezeMaand += Math.abs(e.bedrag);
+      }
+    });
+
+    document.getElementById("saldo").innerText =
+      "€ " + saldo.toFixed(2).replace(".",",");
+
+    updateBudgetUI(uitgavenDezeMaand);
+  };
+}
+
+function updateBudgetUI(spent=0){
+  const budget = parseFloat(localStorage.getItem("monthlyBudget"));
+  const label = document.getElementById("budgetAmount");
+  const warning = document.getElementById("budgetWarning");
+
+  if(!budget){
+    label.innerText = "Niet ingesteld";
+    warning.style.display="none";
+    return;
   }
-}
 
-function buildCalendar(){
-  calendar.innerHTML="";
-  const now=new Date();
-  const year=now.getFullYear();
-  const month=now.getMonth();
-  const days=new Date(year,month+1,0).getDate();
+  label.innerText = `€ ${budget.toFixed(2)}`;
+  const percent = spent / budget;
 
-  const tx=db.transaction("items","readonly");
-  tx.objectStore("items").getAll().onsuccess=e=>{
-    const data=e.target.result;
-    for(let d=1;d<=days;d++){
-      const date=`${year}-${String(month+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
-      const entries=data.filter(i=>i.datum===date);
-      const div=document.createElement("div");
-      div.className="day"+(entries.length?" has":"");
-      div.innerText=d;
-      div.onclick=()=>openDay(date,entries);
-      calendar.appendChild(div);
-    }
+  if(percent >= 1){
+    warning.style.display="block";
+    warning.style.background="#fee2e2";
+    warning.style.color="#991b1b";
+    warning.innerText = "⚠️ Budget overschreden!";
   }
-}
-
-function openDay(date,entries){
-  dayTitle.innerText=date;
-  dayList.innerHTML="";
-  entries.forEach(e=>{
-    const div=document.createElement("div");
-    div.className="entry";
-    div.innerHTML=`<span>${e.bron}</span>
-    <span class="${e.bedrag>=0?"pos":"neg"}">€ ${e.bedrag.toFixed(2)}</span>`;
-    dayList.appendChild(div);
-  });
-  dayModal.style.display="flex";
-}
-
-function toggleTheme(){
-  document.body.classList.toggle("dark");
-  localStorage.setItem("theme",document.body.classList.contains("dark"));
-}
-if(localStorage.getItem("theme")==="true"){
-  document.body.classList.add("dark");
+  else if(percent >= 0.8){
+    warning.style.display="block";
+    warning.style.background="#fef3c7";
+    warning.style.color="#92400e";
+    warning.innerText = "⚠️ Je zit boven 80% van je budget";
+  }
+  else{
+    warning.style.display="none";
+  }
 }
