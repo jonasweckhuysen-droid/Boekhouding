@@ -124,6 +124,19 @@ input,select{
 <p>Huidig saldo</p>
 <div id="saldo">€ 0,00</div>
 </div>
+<div id="budgetCard" style="max-width:360px;margin:10px auto;
+background:white;padding:16px;border-radius:18px;
+box-shadow:0 6px 18px rgba(0,0,0,.1);">
+  <p>Maandelijks budget</p>
+  <strong id="budgetAmount">Niet ingesteld</strong>
+  <br><br>
+  <button class="btn btn-view" onclick="openBudget()">⚙️ Budget instellen</button>
+</div>
+
+<div id="budgetWarning" style="display:none;
+max-width:360px;margin:10px auto;
+padding:14px;border-radius:14px;
+text-align:center;font-weight:500;"></div>
 
 <div class="actions">
 <button class="btn add" onclick="openModal()">➕ Toevoegen</button>
@@ -164,5 +177,14 @@ input,select{
 </div>
 
 <script src="script.js"></script>
+  <div id="budgetModal" style="display:none" class="modal">
+  <div class="modalBox">
+    <h2>Maandelijks budget</h2>
+    <input type="number" id="budgetInput" placeholder="Bijv. 1500">
+    <br><br>
+    <button class="btn save" onclick="saveBudget()">Opslaan</button>
+    <button class="btn cancel" onclick="closeBudget()">Annuleren</button>
+  </div>
+  </div>
 </body>
 </html>
