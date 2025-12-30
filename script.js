@@ -1,6 +1,19 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-firestore.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-auth.js";
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  getDocs,
+  doc,
+  setDoc,
+  deleteDoc
+} from "https://www.gstatic.com/firebasejs/10.1.0/firebase-firestore.js";
+import {
+  getAuth,
+  GoogleAuthProvider,
+  signInWithPopup,
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.1.0/firebase-auth.js";
 
 /* ===== FIREBASE ===== */
 const firebaseConfig = {
@@ -17,15 +30,21 @@ const provider = new GoogleAuthProvider();
 /* ===== DATA ===== */
 let user;
 let items = [];
+let fixedCosts = {};
+let savings = {};
 
-let fixedCosts = JSON.parse(localStorage.getItem("fixedCosts")) || {};
-let savings = JSON.parse(localStorage.getItem("savings")) || {};
+/* ===== HELPERS ===== */
+const qs = id => document.getElementById(id);
 
 /* ===== AUTH ===== */
 onAuthStateChanged(auth, async u => {
   if (!u) await signInWithPopup(auth, provider);
   user = auth.currentUser;
+
   await loadItems();
+  await loadFixedCosts();
+  await loadSavings();
+  updateUI();
 });
 
 /* ===== LOAD DATA ===== */
@@ -33,7 +52,18 @@ async function loadItems(){
   const snap = await getDocs(collection(db,"users",user.uid,"items"));
   items = [];
   snap.forEach(d => items.push(d.data()));
-  updateUI();
+}
+
+async function loadFixedCosts(){
+  const snap = await getDocs(collection(db,"users",user.uid,"fixedCosts"));
+  fixedCosts = {};
+  snap.forEach(d => fixedCosts[d.id] = d.data().amount);
+}
+
+async function loadSavings(){
+  const snap = await getDocs(collection(db,"users",user.uid,"savings"));
+  savings = {};
+  snap.forEach(d => savings[d.id] = d.data().amount);
 }
 
 /* ===== UI ===== */
@@ -57,9 +87,6 @@ function updateUI(){
 
   refreshSavingsSelect();
 }
-
-/* ===== HELPERS ===== */
-const qs = id => document.getElementById(id);
 
 /* ===== MODALS ===== */
 qs("addBtn").onclick = ()=>qs("modal").style.display="flex";
@@ -89,17 +116,25 @@ qs("saveEntryBtn").onclick = async ()=>{
 
   qs("modal").style.display="none";
   await loadItems();
+  updateUI();
 };
 
 /* ===== FIXED COSTS ===== */
-qs("saveFixedBtn").onclick = ()=>{
-  fixedCosts = {
+qs("saveFixedBtn").onclick = async ()=>{
+  const data = {
     Wonen: Number(qs("fc-wonen").value||0),
     Auto: Number(qs("fc-auto").value||0),
     Verzekering: Number(qs("fc-verzekering").value||0)
   };
 
-  localStorage.setItem("fixedCosts", JSON.stringify(fixedCosts));
+  for(const [name, amount] of Object.entries(data)){
+    await setDoc(
+      doc(db,"users",user.uid,"fixedCosts",name),
+      { amount }
+    );
+  }
+
+  fixedCosts = data;
   qs("fixedCostsModal").style.display="none";
   updateUI();
 };
@@ -122,8 +157,8 @@ function refreshSavingsSelect(){
   if(sel.value) qs("savingsName").value = sel.value;
 }
 
-/* bedrag toevoegen / aftrekken */
-qs("saveSavingsBtn").onclick = ()=>{
+/* bedrag OPTELLEN */
+qs("saveSavingsBtn").onclick = async ()=>{
   const name = qs("savingsSelect").value || qs("savingsName").value.trim();
   const amount = Number(qs("savingsAmount").value);
 
@@ -131,27 +166,39 @@ qs("saveSavingsBtn").onclick = ()=>{
 
   savings[name] = (savings[name] || 0) + amount;
 
-  localStorage.setItem("savings", JSON.stringify(savings));
+  await setDoc(
+    doc(db,"users",user.uid,"savings",name),
+    { amount: savings[name] }
+  );
+
   qs("savingsAmount").value = "";
   updateUI();
 };
 
 /* naam wijzigen */
-qs("renameSavingsBtn").onclick = ()=>{
+qs("renameSavingsBtn").onclick = async ()=>{
   const oldName = qs("savingsSelect").value;
   const newName = qs("savingsName").value.trim();
 
   if(!oldName || !newName || oldName === newName) return;
   if(savings[newName]) return alert("Deze spaarpot bestaat al");
 
-  savings[newName] = savings[oldName];
-  delete savings[oldName];
+  await setDoc(
+    doc(db,"users",user.uid,"savings",newName),
+    { amount: savings[oldName] }
+  );
 
-  localStorage.setItem("savings", JSON.stringify(savings));
+  await deleteDoc(
+    doc(db,"users",user.uid,"savings",oldName)
+  );
+
+  delete savings[oldName];
+  savings[newName] = savings[newName];
+
   updateUI();
 };
 
-/* auto-invullen bij selectie */
+/* auto-invullen */
 qs("savingsSelect").onchange = ()=>{
   qs("savingsName").value = qs("savingsSelect").value;
 };
