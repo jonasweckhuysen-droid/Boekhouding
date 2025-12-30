@@ -36,6 +36,40 @@ let savings = {};
 /* ===== HELPERS ===== */
 const qs = id => document.getElementById(id);
 
+/* ===== CHARTS ===== */
+let savingsChart, expenseChart;
+function updateCharts() {
+  const savingsCtx = document.getElementById("savingsChart").getContext("2d");
+  const expenseCtx = document.getElementById("expenseChart").getContext("2d");
+
+  const savingsLabels = Object.keys(savings);
+  const savingsValues = Object.values(savings);
+
+  const expenseData = {};
+  items.forEach(i => {
+    if(i.bedrag < 0) {
+      expenseData[i.categorie] = (expenseData[i.categorie] || 0) + Math.abs(i.bedrag);
+    }
+  });
+
+  const expenseLabels = Object.keys(expenseData);
+  const expenseValues = Object.values(expenseData);
+
+  if(savingsChart) savingsChart.destroy();
+  if(expenseChart) expenseChart.destroy();
+
+  savingsChart = new Chart(savingsCtx, {
+    type: 'doughnut',
+    data: { labels: savingsLabels, datasets: [{ data: savingsValues, backgroundColor: savingsLabels.map((_,i)=>`hsl(${i*60},70%,60%)`) }] }
+  });
+
+  expenseChart = new Chart(expenseCtx, {
+    type: 'bar',
+    data: { labels: expenseLabels, datasets: [{ label:'Uitgaven', data: expenseValues, backgroundColor:'#f97316' }] },
+    options: { responsive:true, plugins:{legend:{display:false}} }
+  });
+}
+
 /* ===== AUTH ===== */
 onAuthStateChanged(auth, async u => {
   if (!u) await signInWithPopup(auth, provider);
@@ -72,20 +106,26 @@ function updateUI(){
   const fixedTotal = Object.values(fixedCosts).reduce((a,b)=>a + Number(b||0), 0);
 
   qs("saldo").innerText = `€ ${saldo.toFixed(2)}`;
-  qs("expectedEnd").innerText =
-    `🔮 Verwacht einde maand: € ${(saldo - fixedTotal).toFixed(2)}`;
+  qs("expectedEnd").innerText = `🔮 Verwacht einde maand: € ${(saldo - fixedTotal).toFixed(2)}`;
 
-  qs("fixedCostsList").innerHTML =
-    Object.keys(fixedCosts).length
-      ? Object.entries(fixedCosts).map(([k,v])=>`${k}: € ${v}`).join("<br>")
-      : "—";
+  qs("fixedCostsList").innerHTML = Object.keys(fixedCosts).length
+    ? Object.entries(fixedCosts).map(([k,v])=>`${k}: € ${v}`).join("<br>")
+    : "—";
 
-  qs("savingsList").innerHTML =
-    Object.keys(savings).length
-      ? Object.entries(savings).map(([k,v])=>`${k}: € ${v.toFixed(2)}`).join("<br>")
-      : "—";
+  // Spaarpotten met verwijderknop
+  qs("savingsList").innerHTML = Object.keys(savings).length
+    ? Object.entries(savings).map(([k,v])=>
+        `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+          <span>${k}: € ${v.toFixed(2)}</span>
+          <button style="background:#ef4444;color:white;border:none;border-radius:6px;padding:2px 6px;cursor:pointer" onclick="removeSavings('${k}')">
+            <i class="fa-solid fa-trash"></i>
+          </button>
+        </div>`
+      ).join("")
+    : "—";
 
   refreshSavingsSelect();
+  updateCharts();
 }
 
 /* ===== MODALS ===== */
@@ -128,10 +168,7 @@ qs("saveFixedBtn").onclick = async ()=>{
   };
 
   for(const [name, amount] of Object.entries(data)){
-    await setDoc(
-      doc(db,"users",user.uid,"fixedCosts",name),
-      { amount }
-    );
+    await setDoc(doc(db,"users",user.uid,"fixedCosts",name), { amount });
   }
 
   fixedCosts = data;
@@ -166,10 +203,7 @@ qs("saveSavingsBtn").onclick = async ()=>{
 
   savings[name] = (savings[name] || 0) + amount;
 
-  await setDoc(
-    doc(db,"users",user.uid,"savings",name),
-    { amount: savings[name] }
-  );
+  await setDoc(doc(db,"users",user.uid,"savings",name), { amount: savings[name] });
 
   qs("savingsAmount").value = "";
   updateUI();
@@ -183,14 +217,8 @@ qs("renameSavingsBtn").onclick = async ()=>{
   if(!oldName || !newName || oldName === newName) return;
   if(savings[newName]) return alert("Deze spaarpot bestaat al");
 
-  await setDoc(
-    doc(db,"users",user.uid,"savings",newName),
-    { amount: savings[oldName] }
-  );
-
-  await deleteDoc(
-    doc(db,"users",user.uid,"savings",oldName)
-  );
+  await setDoc(doc(db,"users",user.uid,"savings",newName), { amount: savings[oldName] });
+  await deleteDoc(doc(db,"users",user.uid,"savings",oldName));
 
   delete savings[oldName];
   savings[newName] = savings[newName];
@@ -201,4 +229,13 @@ qs("renameSavingsBtn").onclick = async ()=>{
 /* auto-invullen */
 qs("savingsSelect").onchange = ()=>{
   qs("savingsName").value = qs("savingsSelect").value;
+};
+
+/* ===== SPAARPOT VERWIJDEREN ===== */
+window.removeSavings = async (name) => {
+  if(!confirm(`Weet je zeker dat je spaarpot "${name}" wilt verwijderen?`)) return;
+
+  await deleteDoc(doc(db,"users",user.uid,"savings",name));
+  delete savings[name];
+  updateUI();
 };
