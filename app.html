@@ -237,13 +237,35 @@ canvas{
 <div id="fixedCostsModal">
   <div class="box">
     <h3>Vaste kosten</h3>
-    <input id="fc-wonen" placeholder="🏠 Wonen">
-    <input id="fc-auto" placeholder="🚗 Auto">
-    <input id="fc-verzekering" placeholder="🛡️ Verzekering">
-    <input id="fc-internet" placeholder="🌐 Internet">
-    <input id="fc-telefoon" placeholder="📱 Telefoon">
-    <input id="fc-lening-auto" placeholder="🚘 Lening auto">
-    <input id="fc-lening-moto" placeholder="🏍️ Lening Moto">
+
+    <div class="fixed-cost-item">
+      <input id="fc-wonen" placeholder="🏠 Wonen">
+      <button class="btn cancel removeFixed" data-key="Wonen"><i class="fa-solid fa-trash"></i></button>
+    </div>
+    <div class="fixed-cost-item">
+      <input id="fc-auto" placeholder="🚗 Auto">
+      <button class="btn cancel removeFixed" data-key="Auto"><i class="fa-solid fa-trash"></i></button>
+    </div>
+    <div class="fixed-cost-item">
+      <input id="fc-verzekering" placeholder="🛡️ Verzekering">
+      <button class="btn cancel removeFixed" data-key="Verzekering"><i class="fa-solid fa-trash"></i></button>
+    </div>
+    <div class="fixed-cost-item">
+      <input id="fc-internet" placeholder="🌐 Internet">
+      <button class="btn cancel removeFixed" data-key="Internet"><i class="fa-solid fa-trash"></i></button>
+    </div>
+    <div class="fixed-cost-item">
+      <input id="fc-telefoon" placeholder="📱 Telefoon">
+      <button class="btn cancel removeFixed" data-key="Telefoon"><i class="fa-solid fa-trash"></i></button>
+    </div>
+    <div class="fixed-cost-item">
+      <input id="fc-lening-auto" placeholder="🚘 Lening auto">
+      <button class="btn cancel removeFixed" data-key="Lening auto"><i class="fa-solid fa-trash"></i></button>
+    </div>
+    <div class="fixed-cost-item">
+      <input id="fc-lening-moto" placeholder="🏍️ Lening Moto">
+      <button class="btn cancel removeFixed" data-key="Lening Moto"><i class="fa-solid fa-trash"></i></button>
+    </div>
 
     <button class="btn save" id="saveFixedBtn">
       <i class="fa-solid fa-save"></i> Opslaan
