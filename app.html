@@ -17,111 +17,107 @@ connect-src 'self' https://*.firebaseio.com https://*.googleapis.com;
 ">
 
 <style>
-/* styling ongewijzigd */
+body{
+  margin:0;
+  font-family:'Poppins',sans-serif;
+  background:linear-gradient(135deg,#dbeafe,#f0f9ff);
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+}
+body.dark{background:#020617;color:white;}
+
+.container{
+  width:100%;
+  max-width:400px;
+  padding:20px;
+  display:flex;
+  flex-direction:column;
+  gap:20px;
+}
+
+#saldoCard, #fixedCostsCard, #savingsCard, .actions{
+  background:white;
+  border-radius:20px;
+  padding:16px;
+  box-shadow:0 8px 20px rgba(0,0,0,.1);
+}
+body.dark #saldoCard, body.dark #fixedCostsCard, body.dark #savingsCard{background:#020617}
+
+.btn{
+  padding:12px;
+  border-radius:14px;
+  border:none;
+  font-size:16px;
+  cursor:pointer;
+}
+.btn-view{background:#10b981;color:white;}
+.btn.save{background:#3b82f6;color:white;}
+.btn.cancel{background:#ef4444;color:white;}
+
+#modal,#dayModal,#fixedCostsModal,#savingsModal{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.5);
+  display:none;
+  align-items:center;
+  justify-content:center;
+}
+.box{
+  background:white;
+  width:90%;
+  max-width:360px;
+  padding:20px;
+  border-radius:20px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+body.dark .box{background:#020617}
+
+input,select{
+  padding:10px;
+  border-radius:10px;
+  border:1px solid #cbd5f5;
+}
 </style>
 </head>
 
 <body>
-<div class="themeToggle" id="themeToggle">🌙</div>
 
 <div class="container">
+
   <header>
     <h1>Meneige Boekhouding <i class="fa-solid fa-piggy-bank"></i></h1>
   </header>
 
-  <div id="saldoCard">
-    <i class="fa-solid fa-wallet"></i>
-    <div id="saldo">€ 0,00</div>
-    <div id="saldoBarContainer">
-      <div id="saldoBar"></div>
-    </div>
-    <div id="expectedEnd">🔮 Verwacht einde maand: € 0,00</div>
-  </div>
-
-  <div id="fixedCostsCard">
-    <p>Vaste Kosten</p>
-    <div id="fixedCostsList">Geen vaste kosten ingesteld</div>
-    <br>
-    <button class="btn btn-view" id="fixedCostsBtn">⚙️ Instellen</button>
-  </div>
-
   <div id="savingsCard">
-    <p>Spaarpotjes</p>
+    <p><strong>Spaarpotjes</strong></p>
     <div id="savingsList">Geen spaarpotjes ingesteld</div>
     <br>
-    <button class="btn btn-view" id="savingsBtn">➕ Beheer</button>
+    <button class="btn btn-view" id="savingsBtn">➕ Beheer spaarpotjes</button>
   </div>
 
-  <div class="actions">
-    <button class="btn add" id="addBtn"><i class="fa-solid fa-plus"></i> Toevoegen</button>
-    <button class="btn cal" id="calBtn"><i class="fa-solid fa-calendar-days"></i> Kalender</button>
-  </div>
-
-  <div id="calendar"></div>
-
-  <div style="max-width:400px;margin:20px auto;">
-    <h3>Uitgaven per categorie (maandelijks)</h3>
-    <canvas id="expenseChart" width="400" height="200"></canvas>
-  </div>
 </div>
 
-<!-- MODALS -->
-<div id="modal">
-  <div class="box">
-    <h3>Nieuwe beweging</h3>
-    <select id="soort">
-      <option value="inkomst">💰 Inkomst</option>
-      <option value="uitgave">💸 Uitgave</option>
-    </select>
-    <input id="bron" placeholder="Van / Naar">
-    <input type="date" id="datum">
-    <input type="number" id="bedrag" placeholder="Bedrag">
-    <label><input type="checkbox" id="recurring"> Maandelijks</label>
-    <select id="saveToSavings">
-      <option value="">💾 Niet naar spaarpot</option>
-    </select>
-    <br>
-    <div style="display:flex;gap:10px;justify-content:flex-end;">
-      <button class="btn add" id="saveEntryBtn"><i class="fa-solid fa-floppy-disk"></i> Opslaan</button>
-      <button class="btn cancel" id="closeModalBtn"><i class="fa-solid fa-xmark"></i> Annuleren</button>
-    </div>
-  </div>
-</div>
-
-<div id="dayModal">
-  <div class="box">
-    <h3 id="dayTitle"></h3>
-    <div id="dayList"></div>
-    <button class="btn cancel" id="closeDayBtn"><i class="fa-solid fa-xmark"></i> Sluiten</button>
-  </div>
-</div>
-
-<div id="fixedCostsModal">
-  <div class="box">
-    <h2>Vaste Kosten</h2>
-    <input type="number" id="leningInput" placeholder="Lening">
-    <input type="number" id="electriciteitInput" placeholder="Electriciteit">
-    <input type="number" id="mobiliteitInput" placeholder="Mobiliteit">
-    <input type="number" id="verzekeringInput" placeholder="Verzekering">
-    <br><br>
-    <button class="btn save" id="saveFixedBtn">Opslaan</button>
-    <button class="btn cancel" id="closeFixedBtn">Annuleren</button>
-  </div>
-</div>
-
-<!-- SPAARPOT MODAL -->
+<!-- SPAARPOT BEHEER MODAL -->
 <div id="savingsModal">
   <div class="box">
-    <h3>Spaarpot beheren (saldo aanpassen)</h3>
-    <input type="text" id="savingsName" placeholder="Naam spaarpot">
-    <input type="number" id="savingsTarget" placeholder="Huidig bedrag (kan + of -)">
-    <br>
-    <button class="btn save" id="saveSavingsBtn">Opslaan</button>
-    <button class="btn cancel" id="closeSavingsBtn">Annuleren</button>
+    <h3>Spaarpotten beheren</h3>
+
+    <p style="font-size:14px;opacity:.8">
+      Dit zijn <strong>lopende spaarbedragen</strong>.  
+      Je kan bedragen verhogen of verlagen.
+    </p>
+
+    <input type="text" id="savingsName" placeholder="Naam spaarpot (bv. Vakantie)">
+    <input type="number" id="savingsTarget" placeholder="Huidig bedrag (€)">
+    
+    <button class="btn save" id="saveSavingsBtn">➕ Toevoegen</button>
+    <button class="btn cancel" id="closeSavingsBtn">Sluiten</button>
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script type="module" src="script.js"></script>
 </body>
 </html>
