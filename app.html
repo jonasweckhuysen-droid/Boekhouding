@@ -8,16 +8,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
 
-<meta http-equiv="Content-Security-Policy" content="
-default-src 'self';
-font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com data:;
-style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com;
-script-src 'self' 'unsafe-inline' https://www.gstatic.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net;
-connect-src 'self' https://*.firebaseio.com https://*.googleapis.com;
-">
-
 <style>
-/* === jouw bestaande CSS ongewijzigd === */
 *{box-sizing:border-box}
 body{
   margin:0;font-family:'Poppins',sans-serif;
@@ -26,17 +17,22 @@ body{
 }
 .container{width:100%;max-width:420px;padding:20px;display:flex;flex-direction:column;gap:18px}
 header{text-align:center}
-#saldoCard,#fixedCostsCard,#savingsCard,.actions{
+
+.card{
   background:white;border-radius:20px;padding:16px;
   box-shadow:0 10px 25px rgba(0,0,0,.1)
 }
+
 .actions{display:flex;gap:10px}
-.btn{flex:1;padding:12px;border:none;border-radius:14px;font-size:16px;cursor:pointer}
-.add{background:#3b82f6;color:white}
-.cal{background:#fbbf24;color:white}
-.btn-view{background:#10b981;color:white}
-.btn.save{background:#2563eb;color:white}
-.btn.cancel{background:#ef4444;color:white}
+.btn{
+  flex:1;padding:12px;border:none;border-radius:14px;
+  font-size:16px;cursor:pointer;color:white
+}
+.add{background:#3b82f6}
+.cal{background:#fbbf24}
+.view{background:#10b981}
+.save{background:#2563eb}
+.cancel{background:#ef4444}
 
 #modal,#fixedCostsModal,#savingsModal{
   position:fixed;inset:0;
@@ -54,80 +50,75 @@ input,select{padding:10px;border-radius:10px;border:1px solid #cbd5f5}
 </head>
 
 <body>
-
 <div class="container">
 
 <header>
 <h1>Meneige Boekhouding <i class="fa-solid fa-piggy-bank"></i></h1>
 </header>
 
-<div id="saldoCard">
-  <div id="saldo">€ 0,00</div>
-  <div id="saldoBarContainer"><div id="saldoBar"></div></div>
-  <div id="expectedEnd">🔮 Verwacht einde maand: € 0,00</div>
+<div class="card">
+  <h2 id="saldo">€ 0,00</h2>
+  <p id="expectedEnd">🔮 Verwacht einde maand: € 0,00</p>
 </div>
 
-<div id="fixedCostsCard">
-  <p>Vaste Kosten</p>
-  <div id="fixedCostsList">Geen vaste kosten ingesteld</div><br>
-  <button class="btn btn-view" id="fixedCostsBtn">⚙️ Instellen</button>
+<div class="card">
+  <p><strong>Vaste kosten</strong></p>
+  <div id="fixedCostsList">—</div><br>
+  <button class="btn view" id="fixedCostsBtn">⚙️ Instellen</button>
 </div>
 
-<div id="savingsCard">
-  <p>Spaarpotjes</p>
-  <div id="savingsList">Geen spaarpotjes ingesteld</div><br>
-  <button class="btn btn-view" id="savingsBtn">➕ Beheer</button>
+<div class="card">
+  <p><strong>Spaarpotten</strong></p>
+  <div id="savingsList">—</div><br>
+  <button class="btn view" id="savingsBtn">➕ Beheer</button>
 </div>
 
 <div class="actions">
   <button class="btn add" id="addBtn">➕ Toevoegen</button>
-  <button class="btn cal" id="calBtn">📅 Kalender</button>
 </div>
 
 </div>
 
-<!-- ================= MODALS ================= -->
+<!-- ===== MODALS ===== -->
 
-<!-- TOEVOEGEN -->
 <div id="modal">
   <div class="box">
     <select id="soort">
       <option value="inkomst">Inkomst</option>
       <option value="uitgave">Uitgave</option>
     </select>
-    <input id="bron" placeholder="Bron">
     <input type="date" id="datum">
     <input type="number" id="bedrag" placeholder="Bedrag">
-    <label><input type="checkbox" id="recurring"> Terugkerend</label>
+    <select id="categorie">
+      <option>Algemeen</option>
+      <option>Wonen</option>
+      <option>Auto</option>
+      <option>Vrije tijd</option>
+    </select>
     <button class="btn save" id="saveEntryBtn">Opslaan</button>
     <button class="btn cancel" id="closeModalBtn">Annuleren</button>
   </div>
 </div>
 
-<!-- VASTE KOSTEN -->
 <div id="fixedCostsModal">
   <div class="box">
-    <input id="leningInput" placeholder="Lening">
-    <input id="electriciteitInput" placeholder="Elektriciteit">
-    <input id="mobiliteitInput" placeholder="Mobiliteit">
-    <input id="verzekeringInput" placeholder="Verzekering">
-    <button class="btn save" onclick="saveFixedCosts()">Opslaan</button>
+    <input id="fc-wonen" placeholder="Wonen">
+    <input id="fc-auto" placeholder="Auto">
+    <input id="fc-verzekering" placeholder="Verzekering">
+    <button class="btn save" id="saveFixedBtn">Opslaan</button>
     <button class="btn cancel" id="closeFixedBtn">Sluiten</button>
   </div>
 </div>
 
-<!-- SPAARPOTTEN -->
 <div id="savingsModal">
   <div class="box">
-    <input id="savingsName" placeholder="Naam spaarpot">
-    <input id="savingsTarget" placeholder="Bedrag">
-    <button class="btn save" id="saveSavingsBtn">Toevoegen</button>
+    <input id="savingsName" placeholder="Naam">
+    <input id="savingsAmount" placeholder="Bedrag (+ / -)">
+    <button class="btn save" id="saveSavingsBtn">Boek</button>
     <button class="btn cancel" id="closeSavingsBtn">Sluiten</button>
-    <div id="savingsList"></div>
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script type="module" src="script.js"></script>
 </body>
 </html>
