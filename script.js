@@ -220,12 +220,34 @@ async function loadData(){
   updateSavingsUI();
 }
 
-// --- Event Listeners ---
-document.getElementById("addBtn").addEventListener("click", openModal);
-document.getElementById("closeModalBtn").addEventListener("click", closeModal);
-document.getElementById("saveEntryBtn").addEventListener("click", saveEntry);
-document.getElementById("fixedCostsBtn").addEventListener("click", openFixedCosts);
-document.getElementById("closeFixedBtn").addEventListener("click", closeFixedCosts);
+// Sluit modals bij klik buiten box
+function setupModalOutsideClick(modalId) {
+  const modal = document.getElementById(modalId);
+  modal.addEventListener("click", (e) => {
+    if(e.target === modal) { // klik buiten de box
+      modal.style.display = "none";
+    }
+  });
+}
+
+document.addEventListener("DOMContentLoaded", ()=>{
+  document.getElementById("addBtn").addEventListener("click", openModal);
+  document.getElementById("closeModalBtn").addEventListener("click", closeModal);
+  document.getElementById("saveEntryBtn").addEventListener("click", saveEntry);
+  document.getElementById("fixedCostsBtn").addEventListener("click", openFixedCosts);
+  document.getElementById("closeFixedBtn").addEventListener("click", closeFixedCosts);
+
+  document.getElementById("savingsBtn").addEventListener("click", openBeheerModal);
+  document.getElementById("closeSavingsBtn").addEventListener("click", closeBeheerModal);
+  document.getElementById("saveSavingsBtn").addEventListener("click", addBeheerSavings);
+
+  // Setup klik buiten om modals te sluiten
+  setupModalOutsideClick("modal");
+  setupModalOutsideClick("dayModal");
+  setupModalOutsideClick("fixedCostsModal");
+  setupModalOutsideClick("savingsModal");
+});
+
 
 // --- Spaarpot beheer modal ---
 function openBeheerModal() {
@@ -293,10 +315,6 @@ function addBeheerSavings(){
   renderSavingsBeheer();
   updateSavingsUI();
 }
-
-document.getElementById("savingsBtn").addEventListener("click", openBeheerModal);
-document.getElementById("closeSavingsBtn").addEventListener("click", closeBeheerModal);
-document.getElementById("saveSavingsBtn").addEventListener("click", addBeheerSavings);
 
 // --- Init ---
 updateSavingsUI();
