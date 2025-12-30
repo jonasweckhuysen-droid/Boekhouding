@@ -1,8 +1,9 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, collection, addDoc, getDocs, query } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+// ===== Firebase setup =====
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-firestore.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-auth.js";
 
-// Firebase
+// Firebase config (zet hier jouw eigen config)
 const firebaseConfig = {
   apiKey: "AIzaSyAkBAw17gNU_EBhn8dKgyY5qv-ecfWaG2s",
   authDomain: "finance-jonas.firebaseapp.com",
@@ -12,289 +13,153 @@ const firebaseConfig = {
   appId: "1:497182804753:web:ea942a578dd1c15f631ab0",
   measurementId: "G-0J29T1Z7MV"
 };
+
 const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
 const db = getFirestore(app);
+const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
-window.db = db;
 
-// --- automatische categorie mapping ---
-const categoryMap = {
-  "Albert Heijn":"Boodschappen",
-  "Colruyt":"Boodschappen",
-  "Shell":"Mobiliteit",
-  "Telenet":"Internet",
-  "Netflix":"Entertainment"
-};
+// ===== Global variables =====
+let windowUser = null;
+let items = [];
+let fixedCosts = {};
+let savings = [];
 
-// --- Auth ---
-const login = async () => {
-  try { 
-    const result = await signInWithPopup(auth, provider); 
-    window.user = result.user; 
-    loadData(); 
+// ===== Auth en data load =====
+onAuthStateChanged(auth, async user => {
+  if(!user){
+    try { await signInWithPopup(auth, provider); }
+    catch(e){ console.error(e); alert("Login mislukt!"); return; }
   }
-  catch(e){console.error(e);alert("Login mislukt!");}
-};
-onAuthStateChanged(auth,user=>{
-  if(!user) login(); 
-  else {window.user=user; loadData();}
+  windowUser = user;
+  await loadData();
 });
 
-// --- Elements ---
-const modal=document.getElementById("modal");
-const dayModal=document.getElementById("dayModal");
-const fixedCostsModal=document.getElementById("fixedCostsModal");
-
-const soort=document.getElementById("soort");
-const bron=document.getElementById("bron");
-const datum=document.getElementById("datum");
-const bedrag=document.getElementById("bedrag");
-const recurring=document.getElementById("recurring");
-
-let saveToSavings=document.getElementById("saveToSavings");
-if(!saveToSavings){
-  const select = document.createElement("select");
-  select.id="saveToSavings";
-  const defaultOption = document.createElement("option");
-  defaultOption.value="";
-  defaultOption.innerText="Geen spaarpot";
-  select.appendChild(defaultOption);
-  document.querySelector("#modal .box").insertBefore(select, document.querySelector("#modal .box div:last-child"));
-  saveToSavings=document.getElementById("saveToSavings");
-}
-
-const saldoDiv=document.getElementById("saldo");
-const saldoBar=document.getElementById("saldoBar");
-const expectedEndDiv=document.getElementById("expectedEnd");
-const fixedCostsList=document.getElementById("fixedCostsList");
-const dayTitle=document.getElementById("dayTitle");
-const dayList=document.getElementById("dayList");
-
-const leningInput=document.getElementById("leningInput");
-const electriciteitInput=document.getElementById("electriciteitInput");
-const mobiliteitInput=document.getElementById("mobiliteitInput");
-const verzekeringInput=document.getElementById("verzekeringInput");
-
-// --- Spaarpotten ---
-function getSavings(){ return JSON.parse(localStorage.getItem("savings"))||[]; }
-function saveSavingsToStorage(s){ localStorage.setItem("savings",JSON.stringify(s)); }
-
-// --- Spaarpot dropdown update ---
-function updateSavingsUI(){
-  const savings = getSavings();
-  saveToSavings.innerHTML="";
-  const defaultOption = document.createElement("option");
-  defaultOption.value="";
-  defaultOption.innerText="Geen spaarpot";
-  saveToSavings.appendChild(defaultOption);
-  savings.forEach((s,i)=>{
-    const opt = document.createElement("option");
-    opt.value=i;
-    opt.innerText=`${s.name}: € ${s.amount.toFixed(2)}`;
-    saveToSavings.appendChild(opt);
-  });
-}
-
-// --- Modals ---
-function openModal(){ 
-  modal.style.display="flex"; 
-  updateSavingsUI();
-  // Reset velden niet, hou reeds ingevoerde waarden
-  // bedrag.value blijft zoals het is
-}
-function closeModal(){ modal.style.display="none"; }
-function openDayModal(){ dayModal.style.display="flex"; }
-function closeDayModal(){ dayModal.style.display="none"; }
-function openFixedCosts(){
-  fixedCostsModal.style.display="flex";
-  const costs=JSON.parse(localStorage.getItem("fixedCosts"))||{};
-  leningInput.value=costs.lening||"";
-  electriciteitInput.value=costs.electriciteit||"";
-  mobiliteitInput.value=costs.mobiliteit||"";
-  verzekeringInput.value=costs.verzekering||"";
-}
-function closeFixedCosts(){ fixedCostsModal.style.display="none"; }
-
-// --- Save Entry (met spaarpotten) ---
-async function saveEntry(){
-  const soortVal=soort.value;
-  const bronVal=bron.value;
-  const datumVal=datum.value;
-  let bedragVal=parseFloat(bedrag.value);
-  if(isNaN(bedragVal)){ alert("Vul een geldig bedrag in"); return; }
-
-  const recurringVal=recurring.checked;
-  const savingsIndex = saveToSavings.value;
-
-  if(!datumVal){alert("Vul een datum in"); return;}
-  const categorie = categoryMap[bronVal] || "Overig";
-
-  // --- Spaarpot update (nu alleen optellen) ---
-  if(savingsIndex !== ""){
-    const sIndex = parseInt(savingsIndex);
-    const savings = getSavings();
-    if(soortVal === "inkomst"){
-      savings[sIndex].amount += bedragVal; // Optellen
-    } else {
-      savings[sIndex].amount += 0; // Geen aftrekken meer
-    }
-    saveSavingsToStorage(getSavings());
-    updateSavingsUI();
-  }
-
-  if(soortVal==="uitgave") bedragVal = -Math.abs(bedragVal);
-
-  await addDoc(collection(db,"users",user.uid,"items"),{
-    soort:soortVal,
-    bron:bronVal,
-    datum:datumVal,
-    bedrag:bedragVal,
-    categorie:categorie,
-    recurring:recurringVal,
-    savingsIndex: savingsIndex!=="" ? parseInt(savingsIndex) : null,
-    created:Date.now()
-  });
-
-  closeModal();
-  loadData();
-}
-
-// --- Fixed Costs ---
-function saveFixedCosts(){
-  const costs={
-    lening:parseFloat(leningInput.value)||0,
-    electriciteit:parseFloat(electriciteitInput.value)||0,
-    mobiliteit:parseFloat(mobiliteitInput.value)||0,
-    verzekering:parseFloat(verzekeringInput.value)||0
-  };
-  localStorage.setItem("fixedCosts",JSON.stringify(costs));
-  closeFixedCosts();
-  updateFixedCostsUI();
-  loadData();
-}
-
-function updateFixedCostsUI(){
-  const costs=JSON.parse(localStorage.getItem("fixedCosts"))||{};
-  const keys=Object.keys(costs).filter(k=>costs[k]>0);
-  if(keys.length===0) fixedCostsList.innerText="Geen vaste kosten ingesteld";
-  else fixedCostsList.innerHTML=keys.map(k=>`<span>${k.charAt(0).toUpperCase()+k.slice(1)}: € ${costs[k].toFixed(2)}</span>`).join("<br>");
-}
-
-// --- Saldo UI ---
-function updateSaldoUI(saldo=0, spent=0){
-  const costs=JSON.parse(localStorage.getItem("fixedCosts"))||{};
-  const totalFixed=Object.values(costs).reduce((a,b)=>a+b,0);
-  const expectedEnd = saldo - totalFixed;
-
-  saldoDiv.innerHTML = saldo>=0 ? `💰 € ${saldo.toFixed(2).replace(".",",")}` : `🔴 € ${saldo.toFixed(2).replace(".",",")}`;
-  expectedEndDiv.innerHTML = `🔮 Verwacht einde maand: € ${expectedEnd.toFixed(2).replace(".",",")}`;
-
-  const budget = parseFloat(localStorage.getItem("monthlyBudget"))||0;
-  const percent = budget>0 ? Math.min((spent/budget)*100,100) : 0;
-  saldoBar.style.width = percent+"%";
-  saldoBar.style.background = percent>=100 ? "#ef4444" : percent>=80 ? "#facc15" : "#22c55e";
-}
-
-// --- Load Data ---
+// ===== Load all data from Firebase =====
 async function loadData(){
-  const q=query(collection(db,"users",user.uid,"items"));
-  const snap=await getDocs(q);
+  if(!windowUser) return;
 
-  let saldo=0, spent=0;
-  const now=new Date();
-  const m=now.getMonth(), y=now.getFullYear();
-  const items=[];
-
+  // --- Load entries ---
+  const snap = await getDocs(query(collection(db,"users",windowUser.uid,"items"), orderBy("created","asc")));
+  items = [];
   snap.forEach(doc=>{
-    const e=doc.data();
-    saldo+=e.bedrag;
-    const d=new Date(e.datum);
-    items.push({...e,datumObj:d});
-    if(e.bedrag<0 && d.getMonth()===m && d.getFullYear()===y) spent+=Math.abs(e.bedrag);
+    items.push({...doc.data(), id: doc.id, datumObj: new Date(doc.data().datum)});
   });
 
-  window.items = items;
+  // --- Load fixed costs and savings from localStorage ---
+  fixedCosts = JSON.parse(localStorage.getItem("fixedCosts")) || {};
+  savings = JSON.parse(localStorage.getItem("savings")) || [];
+
+  updateUI();
+}
+
+// ===== Update UI =====
+function updateUI(){
+  updateSaldoUI();
   updateFixedCostsUI();
-  updateSaldoUI(saldo,spent);
+  updateSavingsUI();
   updateBudgetChart(items);
-  updateSavingsUI();
+  updateCalendar(items);
 }
 
-// --- Event Listeners ---
-document.getElementById("addBtn").addEventListener("click", openModal);
-document.getElementById("closeModalBtn").addEventListener("click", closeModal);
-document.getElementById("saveEntryBtn").addEventListener("click", saveEntry);
-document.getElementById("fixedCostsBtn").addEventListener("click", openFixedCosts);
-document.getElementById("closeFixedBtn").addEventListener("click", closeFixedCosts);
-
-document.getElementById("savingsBtn").addEventListener("click", ()=>{
-  document.getElementById("savingsModal").style.display="flex";
-  renderSavingsBeheer();
-});
-document.getElementById("closeSavingsBtn").addEventListener("click", ()=>document.getElementById("savingsModal").style.display="none");
-document.getElementById("saveSavingsBtn").addEventListener("click", addBeheerSavings);
-
-// --- Spaarpot beheer modal ---
-function renderSavingsBeheer() {
-  const container = document.getElementById("savingsList");
-  const savings = getSavings();
-  container.innerHTML = "";
-  if(savings.length===0){ container.innerText = "Geen spaarpotjes ingesteld"; return; }
-
-  savings.forEach((s,i)=>{
-    const div = document.createElement("div");
-    div.style.display = "flex";
-    div.style.alignItems = "center";
-    div.style.gap = "8px";
-
-    const nameInput = document.createElement("input");
-    nameInput.value = s.name;
-    nameInput.style.flex="1";
-    nameInput.addEventListener("input", e=>{ savings[i].name=e.target.value; saveSavingsToStorage(savings); updateSavingsUI(); });
-
-    const amountInput = document.createElement("input");
-    amountInput.type="number";
-    amountInput.value = s.amount.toFixed(2);
-    amountInput.style.width="80px";
-    amountInput.addEventListener("input", e=>{
-      let val=parseFloat(e.target.value); if(isNaN(val)) val=0;
-      savings[i].amount = val;
-      saveSavingsToStorage(savings);
-      updateSavingsUI();
-    });
-
-    const delBtn = document.createElement("button");
-    delBtn.innerText = "🗑️"; delBtn.style.border="none"; delBtn.style.background="transparent"; delBtn.style.cursor="pointer";
-    delBtn.addEventListener("click", ()=>{
-      if(confirm(`Wil je "${s.name}" verwijderen?`)){
-        savings.splice(i,1);
-        saveSavingsToStorage(savings);
-        renderSavingsBeheer();
-        updateSavingsUI();
-      }
-    });
-
-    div.appendChild(nameInput); div.appendChild(amountInput); div.appendChild(delBtn);
-    container.appendChild(div);
+// --- Saldo berekenen en tonen ---
+function updateSaldoUI(){
+  let saldo = 0;
+  let spent = 0;
+  const now = new Date();
+  items.forEach(e=>{
+    saldo += e.bedrag;
+    if(e.bedrag < 0 && e.datumObj.getMonth() === now.getMonth() && e.datumObj.getFullYear() === now.getFullYear())
+      spent += Math.abs(e.bedrag);
   });
+
+  document.getElementById("saldo").innerText = `€ ${saldo.toFixed(2)}`;
+  document.getElementById("expectedEnd").innerText = `🔮 Verwacht einde maand: € ${(saldo - spent).toFixed(2)}`;
+
+  // Saldo bar (percentage)
+  const bar = document.getElementById("saldoBar");
+  const perc = Math.min(Math.max((saldo / 1000)*100, 0),100);
+  bar.style.width = perc+"%";
 }
 
-function addBeheerSavings(){
-  const name = document.getElementById("savingsName").value.trim();
-  const amount = parseFloat(document.getElementById("savingsTarget").value);
-  if(!name || isNaN(amount)){ alert("Vul alles correct in"); return; }
+// --- Fixed costs UI ---
+function updateFixedCostsUI(){
+  const listDiv = document.getElementById("fixedCostsList");
+  if(Object.keys(fixedCosts).length === 0){
+    listDiv.innerHTML = "Geen vaste kosten ingesteld";
+  } else {
+    listDiv.innerHTML = "";
+    for(const key in fixedCosts){
+      const p = document.createElement("div");
+      p.innerText = `${key}: € ${fixedCosts[key].toFixed(2)}`;
+      listDiv.appendChild(p);
+    }
+  }
+}
 
-  const savings = getSavings();
-  savings.push({name,amount});
-  saveSavingsToStorage(savings);
+// --- Savings UI ---
+function updateSavingsUI(){
+  const listDiv = document.getElementById("savingsList");
+  if(savings.length === 0){
+    listDiv.innerHTML = "Geen spaarpotjes ingesteld";
+  } else {
+    listDiv.innerHTML = "";
+    savings.forEach(sp => {
+      const p = document.createElement("div");
+      p.innerText = `${sp.name}: € ${sp.amount.toFixed(2)}`;
+      listDiv.appendChild(p);
+    });
+  }
+}
 
-  document.getElementById("savingsName").value="";
-  document.getElementById("savingsTarget").value="";
+// ===== Add entry =====
+async function saveEntry(entry){
+  if(!windowUser) return;
 
-  renderSavingsBeheer();
+  // Spaarpotten cumulatief
+  if(entry.savingsIndex !== null){
+    savings[entry.savingsIndex].amount += entry.bedrag;
+    localStorage.setItem("savings", JSON.stringify(savings));
+    updateSavingsUI();
+    entry.bedrag = 0; // alles naar spaarpot
+  }
+
+  if(entry.soort === "uitgave") entry.bedrag = -Math.abs(entry.bedrag);
+
+  await addDoc(collection(db,"users",windowUser.uid,"items"), {
+    ...entry,
+    created: Date.now()
+  });
+
+  await loadData(); // alles opnieuw laden
+}
+
+// ===== Fixed costs management =====
+function saveFixedCosts(newCosts){
+  fixedCosts = {...newCosts};
+  localStorage.setItem("fixedCosts", JSON.stringify(fixedCosts));
+  updateFixedCostsUI();
+}
+
+// ===== Savings management =====
+function saveSavingsToStorage(newSavings){
+  savings = [...newSavings];
+  localStorage.setItem("savings", JSON.stringify(savings));
   updateSavingsUI();
 }
 
-// --- Init ---
-updateSavingsUI();
+// ===== Calendar & Chart placeholders =====
+function updateCalendar(items){
+  // hier komt jouw bestaande kalender code
+}
+
+function updateBudgetChart(items){
+  // hier komt jouw bestaande Chart.js code
+}
+
+// ===== Event listeners voor modals en knoppen =====
+// Bijvoorbeeld:
+// addBtn.onclick = () => openModal('entry');
+// fixedCostsBtn.onclick = () => openModal('fixedCosts');
+// savingsBtn.onclick = () => openModal('savings');
+// En daarna saveEntry(), saveFixedCosts(), saveSavingsToStorage() aanroepen bij submit
