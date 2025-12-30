@@ -1,17 +1,11 @@
-// ===== Firebase setup =====
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-firestore.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-auth.js";
 
-// Firebase config (zet hier jouw eigen config)
 const firebaseConfig = {
   apiKey: "AIzaSyAkBAw17gNU_EBhn8dKgyY5qv-ecfWaG2s",
   authDomain: "finance-jonas.firebaseapp.com",
-  projectId: "finance-jonas",
-  storageBucket: "finance-jonas.firebasestorage.app",
-  messagingSenderId: "497182804753",
-  appId: "1:497182804753:web:ea942a578dd1c15f631ab0",
-  measurementId: "G-0J29T1Z7MV"
+  projectId: "finance-jonas"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -19,147 +13,76 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 
-// ===== Global variables =====
-let windowUser = null;
-let items = [];
-let fixedCosts = {};
-let savings = [];
+let user, items = [];
+let fixedCosts = JSON.parse(localStorage.getItem("fixedCosts")) || {};
+let savings = JSON.parse(localStorage.getItem("savings")) || {};
 
-// ===== Auth en data load =====
-onAuthStateChanged(auth, async user => {
-  if(!user){
-    try { await signInWithPopup(auth, provider); }
-    catch(e){ console.error(e); alert("Login mislukt!"); return; }
-  }
-  windowUser = user;
-  await loadData();
+onAuthStateChanged(auth, async u => {
+  if(!u) await signInWithPopup(auth, provider);
+  user = auth.currentUser;
+  await loadItems();
 });
 
-// ===== Load all data from Firebase =====
-async function loadData(){
-  if(!windowUser) return;
-
-  // --- Load entries ---
-  const snap = await getDocs(query(collection(db,"users",windowUser.uid,"items"), orderBy("created","asc")));
+async function loadItems(){
+  const snap = await getDocs(collection(db,"users",user.uid,"items"));
   items = [];
-  snap.forEach(doc=>{
-    items.push({...doc.data(), id: doc.id, datumObj: new Date(doc.data().datum)});
-  });
-
-  // --- Load fixed costs and savings from localStorage ---
-  fixedCosts = JSON.parse(localStorage.getItem("fixedCosts")) || {};
-  savings = JSON.parse(localStorage.getItem("savings")) || [];
-
+  snap.forEach(d => items.push(d.data()));
   updateUI();
 }
 
-// ===== Update UI =====
 function updateUI(){
-  updateSaldoUI();
-  updateFixedCostsUI();
-  updateSavingsUI();
-  updateBudgetChart(items);
-  updateCalendar(items);
-}
-
-// --- Saldo berekenen en tonen ---
-function updateSaldoUI(){
-  let saldo = 0;
-  let spent = 0;
-  const now = new Date();
-  items.forEach(e=>{
-    saldo += e.bedrag;
-    if(e.bedrag < 0 && e.datumObj.getMonth() === now.getMonth() && e.datumObj.getFullYear() === now.getFullYear())
-      spent += Math.abs(e.bedrag);
-  });
+  const saldo = items.reduce((s,i)=>s+i.bedrag,0);
+  const fixedTotal = Object.values(fixedCosts).reduce((a,b)=>a+Number(b||0),0);
 
   document.getElementById("saldo").innerText = `€ ${saldo.toFixed(2)}`;
-  document.getElementById("expectedEnd").innerText = `🔮 Verwacht einde maand: € ${(saldo - spent).toFixed(2)}`;
+  document.getElementById("expectedEnd").innerText =
+    `🔮 Verwacht einde maand: € ${(saldo - fixedTotal).toFixed(2)}`;
 
-  // Saldo bar (percentage)
-  const bar = document.getElementById("saldoBar");
-  const perc = Math.min(Math.max((saldo / 1000)*100, 0),100);
-  bar.style.width = perc+"%";
+  document.getElementById("fixedCostsList").innerHTML =
+    Object.entries(fixedCosts).map(([k,v])=>`${k}: € ${v}`).join("<br>") || "—";
+
+  document.getElementById("savingsList").innerHTML =
+    Object.entries(savings).map(([k,v])=>`${k}: € ${v}`).join("<br>") || "—";
 }
 
-// --- Fixed costs UI ---
-function updateFixedCostsUI(){
-  const listDiv = document.getElementById("fixedCostsList");
-  if(Object.keys(fixedCosts).length === 0){
-    listDiv.innerHTML = "Geen vaste kosten ingesteld";
-  } else {
-    listDiv.innerHTML = "";
-    for(const key in fixedCosts){
-      const p = document.createElement("div");
-      p.innerText = `${key}: € ${fixedCosts[key].toFixed(2)}`;
-      listDiv.appendChild(p);
-    }
-  }
-}
+/* ===== EVENTS ===== */
+const qs = id => document.getElementById(id);
+qs("addBtn").onclick = ()=>qs("modal").style.display="flex";
+qs("closeModalBtn").onclick = ()=>qs("modal").style.display="none";
 
-// --- Savings UI ---
-function updateSavingsUI(){
-  const listDiv = document.getElementById("savingsList");
-  if(savings.length === 0){
-    listDiv.innerHTML = "Geen spaarpotjes ingesteld";
-  } else {
-    listDiv.innerHTML = "";
-    savings.forEach(sp => {
-      const p = document.createElement("div");
-      p.innerText = `${sp.name}: € ${sp.amount.toFixed(2)}`;
-      listDiv.appendChild(p);
-    });
-  }
-}
-
-// ===== Add entry =====
-async function saveEntry(entry){
-  if(!windowUser) return;
-
-  // Spaarpotten cumulatief
-  if(entry.savingsIndex !== null){
-    savings[entry.savingsIndex].amount += entry.bedrag;
-    localStorage.setItem("savings", JSON.stringify(savings));
-    updateSavingsUI();
-    entry.bedrag = 0; // alles naar spaarpot
-  }
-
-  if(entry.soort === "uitgave") entry.bedrag = -Math.abs(entry.bedrag);
-
-  await addDoc(collection(db,"users",windowUser.uid,"items"), {
-    ...entry,
-    created: Date.now()
+qs("saveEntryBtn").onclick = async ()=>{
+  const bedrag = Number(qs("bedrag").value);
+  const soort = qs("soort").value;
+  await addDoc(collection(db,"users",user.uid,"items"),{
+    bedrag: soort==="uitgave"?-Math.abs(bedrag):bedrag,
+    datum: qs("datum").value,
+    categorie: qs("categorie").value
   });
+  qs("modal").style.display="none";
+  await loadItems();
+};
 
-  await loadData(); // alles opnieuw laden
-}
+qs("fixedCostsBtn").onclick = ()=>qs("fixedCostsModal").style.display="flex";
+qs("closeFixedBtn").onclick = ()=>qs("fixedCostsModal").style.display="none";
 
-// ===== Fixed costs management =====
-function saveFixedCosts(newCosts){
-  fixedCosts = {...newCosts};
-  localStorage.setItem("fixedCosts", JSON.stringify(fixedCosts));
-  updateFixedCostsUI();
-}
+qs("saveFixedBtn").onclick = ()=>{
+  fixedCosts = {
+    Wonen:Number(qs("fc-wonen").value||0),
+    Auto:Number(qs("fc-auto").value||0),
+    Verzekering:Number(qs("fc-verzekering").value||0)
+  };
+  localStorage.setItem("fixedCosts",JSON.stringify(fixedCosts));
+  qs("fixedCostsModal").style.display="none";
+  updateUI();
+};
 
-// ===== Savings management =====
-function saveSavingsToStorage(newSavings){
-  savings = [...newSavings];
-  localStorage.setItem("savings", JSON.stringify(savings));
-  updateSavingsUI();
-}
+qs("savingsBtn").onclick = ()=>qs("savingsModal").style.display="flex";
+qs("closeSavingsBtn").onclick = ()=>qs("savingsModal").style.display="none";
 
-// ===== Calendar & Chart placeholders =====
-function updateCalendar(items){
-  // hier komt jouw bestaande kalender code
-}
-
-function updateBudgetChart(items){
-  // hier komt jouw bestaande Chart.js code
-}
-
-// ===== Event listeners voor modals en knoppen =====
-// Bijvoorbeeld:
-// addBtn.onclick = () => openModal('entry');
-// fixedCostsBtn.onclick = () => openModal('fixedCosts');
-// savingsBtn.onclick = () => openModal('savings');
-// En daarna saveEntry(), saveFixedCosts(), saveSavingsToStorage() aanroepen bij submit
+qs("saveSavingsBtn").onclick = ()=>{
+  const name = qs("savingsName").value;
+  const amount = Number(qs("savingsAmount").value);
+  savings[name] = (savings[name]||0) + amount;
+  localStorage.setItem("savings",JSON.stringify(savings));
+  updateUI();
+};
