@@ -5,47 +5,144 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Meneige Boekhouding</title>
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
 
 <style>
 *{box-sizing:border-box}
 body{
-  margin:0;font-family:'Poppins',sans-serif;
-  background:linear-gradient(135deg,#dbeafe,#f0f9ff);
-  min-height:100vh;display:flex;justify-content:center;
+  margin:0;
+  font-family:'Poppins',sans-serif;
+  background:linear-gradient(135deg,#e0f2fe,#fefce8);
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
 }
-.container{width:100%;max-width:420px;padding:20px;display:flex;flex-direction:column;gap:18px}
-header{text-align:center}
+
+.container{
+  width:100%;
+  max-width:420px;
+  padding:20px;
+  display:flex;
+  flex-direction:column;
+  gap:20px;
+}
+
+header{
+  text-align:center;
+  color:#1e3a8a;
+}
+
+header h1{
+  margin:0;
+  font-size:26px;
+}
 
 .card{
-  background:white;border-radius:20px;padding:16px;
-  box-shadow:0 10px 25px rgba(0,0,0,.1)
+  background:white;
+  border-radius:22px;
+  padding:18px;
+  box-shadow:0 12px 30px rgba(0,0,0,.12);
 }
 
-.actions{display:flex;gap:10px}
-.btn{
-  flex:1;padding:12px;border:none;border-radius:14px;
-  font-size:16px;cursor:pointer;color:white
+.card h2{
+  margin:0;
+  font-size:28px;
+  color:#0f172a;
 }
-.add{background:#3b82f6}
-.cal{background:#fbbf24}
-.view{background:#10b981}
-.save{background:#2563eb}
-.cancel{background:#ef4444}
+
+.card p{
+  margin:6px 0 0;
+  color:#475569;
+}
+
+.section-title{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-weight:600;
+  color:#1e293b;
+  margin-bottom:8px;
+}
+
+.section-title i{
+  color:#2563eb;
+}
+
+.actions{
+  display:flex;
+  gap:12px;
+}
+
+.btn{
+  flex:1;
+  padding:12px;
+  border:none;
+  border-radius:16px;
+  font-size:15px;
+  cursor:pointer;
+  color:white;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  transition:transform .15s, box-shadow .15s;
+}
+
+.btn:hover{
+  transform:translateY(-1px);
+  box-shadow:0 8px 18px rgba(0,0,0,.15);
+}
+
+.add{background:linear-gradient(135deg,#2563eb,#3b82f6)}
+.view{background:linear-gradient(135deg,#10b981,#34d399)}
+.save{background:linear-gradient(135deg,#1d4ed8,#2563eb)}
+.cancel{background:linear-gradient(135deg,#dc2626,#ef4444)}
 
 #modal,#fixedCostsModal,#savingsModal{
-  position:fixed;inset:0;
-  background:rgba(0,0,0,.5);
-  display:none;align-items:center;justify-content:center;
-  z-index:10
+  position:fixed;
+  inset:0;
+  background:rgba(15,23,42,.6);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:20;
 }
+
 .box{
-  background:white;width:90%;max-width:360px;
-  padding:20px;border-radius:20px;
-  display:flex;flex-direction:column;gap:10px
+  background:white;
+  width:90%;
+  max-width:360px;
+  padding:22px;
+  border-radius:24px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  animation:pop .2s ease-out;
 }
-input,select{padding:10px;border-radius:10px;border:1px solid #cbd5f5}
+
+@keyframes pop{
+  from{transform:scale(.95);opacity:.5}
+  to{transform:scale(1);opacity:1}
+}
+
+input,select{
+  padding:12px;
+  border-radius:14px;
+  border:1px solid #c7d2fe;
+  font-size:14px;
+}
+
+input:focus,select:focus{
+  outline:none;
+  border-color:#2563eb;
+}
+
+.box h3{
+  margin:0 0 6px;
+  text-align:center;
+  color:#1e293b;
+}
 </style>
 </head>
 
@@ -53,28 +150,43 @@ input,select{padding:10px;border-radius:10px;border:1px solid #cbd5f5}
 <div class="container">
 
 <header>
-<h1>Meneige Boekhouding <i class="fa-solid fa-piggy-bank"></i></h1>
+  <h1>Meneige Boekhouding <i class="fa-solid fa-piggy-bank"></i></h1>
 </header>
 
 <div class="card">
   <h2 id="saldo">€ 0,00</h2>
-  <p id="expectedEnd">🔮 Verwacht einde maand: € 0,00</p>
+  <p id="expectedEnd">
+    <i class="fa-solid fa-crystal-ball"></i>
+    Verwacht einde maand: € 0,00
+  </p>
 </div>
 
 <div class="card">
-  <p><strong>Vaste kosten</strong></p>
+  <div class="section-title">
+    <i class="fa-solid fa-receipt"></i>
+    <span>Vaste kosten</span>
+  </div>
   <div id="fixedCostsList">—</div><br>
-  <button class="btn view" id="fixedCostsBtn">⚙️ Instellen</button>
+  <button class="btn view" id="fixedCostsBtn">
+    <i class="fa-solid fa-gear"></i> Instellen
+  </button>
 </div>
 
 <div class="card">
-  <p><strong>Spaarpotten</strong></p>
+  <div class="section-title">
+    <i class="fa-solid fa-piggy-bank"></i>
+    <span>Spaarpotten</span>
+  </div>
   <div id="savingsList">—</div><br>
-  <button class="btn view" id="savingsBtn">➕ Beheer</button>
+  <button class="btn view" id="savingsBtn">
+    <i class="fa-solid fa-wallet"></i> Beheer
+  </button>
 </div>
 
 <div class="actions">
-  <button class="btn add" id="addBtn">➕ Toevoegen</button>
+  <button class="btn add" id="addBtn">
+    <i class="fa-solid fa-plus"></i> Toevoegen
+  </button>
 </div>
 
 </div>
@@ -83,9 +195,10 @@ input,select{padding:10px;border-radius:10px;border:1px solid #cbd5f5}
 
 <div id="modal">
   <div class="box">
+    <h3>Inkomst / Uitgave</h3>
     <select id="soort">
-      <option value="inkomst">Inkomst</option>
-      <option value="uitgave">Uitgave</option>
+      <option value="inkomst">💰 Inkomst</option>
+      <option value="uitgave">💸 Uitgave</option>
     </select>
     <input type="date" id="datum">
     <input type="number" id="bedrag" placeholder="Bedrag">
@@ -95,32 +208,47 @@ input,select{padding:10px;border-radius:10px;border:1px solid #cbd5f5}
       <option>Auto</option>
       <option>Vrije tijd</option>
     </select>
-    <button class="btn save" id="saveEntryBtn">Opslaan</button>
-    <button class="btn cancel" id="closeModalBtn">Annuleren</button>
+    <button class="btn save" id="saveEntryBtn">
+      <i class="fa-solid fa-check"></i> Opslaan
+    </button>
+    <button class="btn cancel" id="closeModalBtn">
+      <i class="fa-solid fa-xmark"></i> Annuleren
+    </button>
   </div>
 </div>
 
 <div id="fixedCostsModal">
   <div class="box">
-    <input id="fc-wonen" placeholder="Wonen">
-    <input id="fc-auto" placeholder="Auto">
-    <input id="fc-verzekering" placeholder="Verzekering">
-    <button class="btn save" id="saveFixedBtn">Opslaan</button>
-    <button class="btn cancel" id="closeFixedBtn">Sluiten</button>
+    <h3>Vaste kosten</h3>
+    <input id="fc-wonen" placeholder="🏠 Wonen">
+    <input id="fc-auto" placeholder="🚗 Auto">
+    <input id="fc-verzekering" placeholder="🛡️ Verzekering">
+    <button class="btn save" id="saveFixedBtn">
+      <i class="fa-solid fa-save"></i> Opslaan
+    </button>
+    <button class="btn cancel" id="closeFixedBtn">
+      Sluiten
+    </button>
   </div>
 </div>
 
 <div id="savingsModal">
   <div class="box">
-    <select id="savingsSelect"></select>
+    <h3>Spaarpotten</h3>
 
+    <select id="savingsSelect"></select>
     <input id="savingsName" placeholder="Naam spaarpot">
     <input id="savingsAmount" placeholder="Bedrag (+ / -)">
 
-    <button class="btn save" id="saveSavingsBtn">Boek bedrag</button>
-    <button class="btn view" id="renameSavingsBtn">Naam wijzigen</button>
-
-    <button class="btn cancel" id="closeSavingsBtn">Sluiten</button>
+    <button class="btn save" id="saveSavingsBtn">
+      <i class="fa-solid fa-coins"></i> Boek bedrag
+    </button>
+    <button class="btn view" id="renameSavingsBtn">
+      <i class="fa-solid fa-pen"></i> Naam wijzigen
+    </button>
+    <button class="btn cancel" id="closeSavingsBtn">
+      Sluiten
+    </button>
   </div>
 </div>
 
