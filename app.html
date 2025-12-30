@@ -228,8 +228,55 @@ body.dark .themeToggle{
   </div>
 </div>
 
-<!-- MODALS (ongewijzigd) -->
-<!-- … jouw modals blijven exact zoals je ze stuurde … -->
+<!-- MODALS -->
+<!-- Transactie Modal -->
+<div id="modal">
+  <div class="box">
+    <h2>Nieuwe Transactie</h2>
+    <select id="soort">
+      <option value="inkomst">Inkomst</option>
+      <option value="uitgave">Uitgave</option>
+    </select>
+    <input type="text" id="bron" placeholder="Bron">
+    <input type="date" id="datum">
+    <input type="number" id="bedrag" placeholder="Bedrag">
+    <input type="checkbox" id="recurring"> Terugkerend
+    <select id="saveToSavings"></select>
+    <div style="display:flex;gap:10px;margin-top:10px;">
+      <button class="btn save" id="saveEntryBtn">Opslaan</button>
+      <button class="btn cancel" id="closeModalBtn">Annuleren</button>
+    </div>
+  </div>
+</div>
+
+<!-- Vaste Kosten Modal -->
+<div id="fixedCostsModal">
+  <div class="box">
+    <h2>Vaste Kosten</h2>
+    <input type="number" id="leningInput" placeholder="Lening">
+    <input type="number" id="electriciteitInput" placeholder="Electriciteit">
+    <input type="number" id="mobiliteitInput" placeholder="Mobiliteit">
+    <input type="number" id="verzekeringInput" placeholder="Verzekering">
+    <div style="display:flex;gap:10px;margin-top:10px;">
+      <button class="btn save" id="saveFixedCostsBtn">Opslaan</button>
+      <button class="btn cancel" id="closeFixedBtn">Annuleren</button>
+    </div>
+  </div>
+</div>
+
+<!-- Spaarpotten Modal -->
+<div id="savingsModal">
+  <div class="box">
+    <h2>Beheer Spaarpotjes</h2>
+    <input type="text" id="savingsName" placeholder="Naam spaarpot">
+    <input type="number" id="savingsTarget" placeholder="Startbedrag">
+    <div style="display:flex;gap:10px;margin-top:10px;">
+      <button class="btn save" id="saveSavingsBtn">Opslaan</button>
+      <button class="btn cancel" id="closeSavingsBtn">Annuleren</button>
+    </div>
+    <div id="savingsList"></div>
+  </div>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script type="module" src="script.js"></script>
