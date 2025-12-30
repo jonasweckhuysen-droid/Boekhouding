@@ -143,6 +143,12 @@ input:focus,select:focus{
   text-align:center;
   color:#1e293b;
 }
+
+/* Grafieken */
+canvas{
+  margin-top:12px;
+  max-height:250px;
+}
 </style>
 </head>
 
@@ -187,6 +193,17 @@ input:focus,select:focus{
   <button class="btn add" id="addBtn">
     <i class="fa-solid fa-plus"></i> Toevoegen
   </button>
+</div>
+
+<!-- Grafiekjes -->
+<div class="card">
+  <h3>📊 Spaarverdeling</h3>
+  <canvas id="savingsChart"></canvas>
+</div>
+
+<div class="card">
+  <h3>📉 Uitgaven per categorie</h3>
+  <canvas id="expenseChart"></canvas>
 </div>
 
 </div>
@@ -252,6 +269,7 @@ input:focus,select:focus{
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script type="module" src="script.js"></script>
 </body>
 </html>
