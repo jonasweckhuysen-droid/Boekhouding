@@ -39,8 +39,8 @@ const qs = id => document.getElementById(id);
 /* ===== CHARTS ===== */
 let savingsChart, expenseChart;
 function updateCharts() {
-  const savingsCtx = document.getElementById("savingsChart").getContext("2d");
-  const expenseCtx = document.getElementById("expenseChart").getContext("2d");
+  const savingsCtx = document.getElementById("savingsChart")?.getContext("2d");
+  const expenseCtx = document.getElementById("expenseChart")?.getContext("2d");
 
   const savingsLabels = Object.keys(savings);
   const savingsValues = Object.values(savings);
@@ -58,16 +58,20 @@ function updateCharts() {
   if(savingsChart) savingsChart.destroy();
   if(expenseChart) expenseChart.destroy();
 
-  savingsChart = new Chart(savingsCtx, {
-    type: 'doughnut',
-    data: { labels: savingsLabels, datasets: [{ data: savingsValues, backgroundColor: savingsLabels.map((_,i)=>`hsl(${i*60},70%,60%)`) }] }
-  });
+  if(savingsCtx) {
+    savingsChart = new Chart(savingsCtx, {
+      type: 'doughnut',
+      data: { labels: savingsLabels, datasets: [{ data: savingsValues, backgroundColor: savingsLabels.map((_,i)=>`hsl(${i*60},70%,60%)`) }] }
+    });
+  }
 
-  expenseChart = new Chart(expenseCtx, {
-    type: 'bar',
-    data: { labels: expenseLabels, datasets: [{ label:'Uitgaven', data: expenseValues, backgroundColor:'#f97316' }] },
-    options: { responsive:true, plugins:{legend:{display:false}} }
-  });
+  if(expenseCtx) {
+    expenseChart = new Chart(expenseCtx, {
+      type: 'bar',
+      data: { labels: expenseLabels, datasets: [{ label:'Uitgaven', data: expenseValues, backgroundColor:'#f97316' }] },
+      options: { responsive:true, plugins:{legend:{display:false}} }
+    });
+  }
 }
 
 /* ===== AUTH ===== */
@@ -108,8 +112,16 @@ function updateUI(){
   qs("saldo").innerText = `€ ${saldo.toFixed(2)}`;
   qs("expectedEnd").innerText = `🔮 Verwacht einde maand: € ${(saldo - fixedTotal).toFixed(2)}`;
 
+  // Vaste kosten met verwijderknop
   qs("fixedCostsList").innerHTML = Object.keys(fixedCosts).length
-    ? Object.entries(fixedCosts).map(([k,v])=>`${k}: € ${v}`).join("<br>")
+    ? Object.entries(fixedCosts).map(([k,v])=>
+        `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+          <span>${k}: € ${v.toFixed(2)}</span>
+          <button style="background:#ef4444;color:white;border:none;border-radius:6px;padding:2px 6px;cursor:pointer" onclick="removeFixedCost('${k}')">
+            <i class="fa-solid fa-trash"></i>
+          </button>
+        </div>`
+      ).join("")
     : "—";
 
   // Spaarpotten met verwijderknop
@@ -164,7 +176,11 @@ qs("saveFixedBtn").onclick = async ()=>{
   const data = {
     Wonen: Number(qs("fc-wonen").value||0),
     Auto: Number(qs("fc-auto").value||0),
-    Verzekering: Number(qs("fc-verzekering").value||0)
+    Verzekering: Number(qs("fc-verzekering").value||0),
+    Internet: Number(qs("fc-internet").value||0),
+    Telefoon: Number(qs("fc-telefoon").value||0),
+    "Lening auto": Number(qs("fc-lening-auto").value||0),
+    "Lening Moto": Number(qs("fc-lening-moto").value||0)
   };
 
   for(const [name, amount] of Object.entries(data)){
@@ -177,8 +193,6 @@ qs("saveFixedBtn").onclick = async ()=>{
 };
 
 /* ===== SPAARPOTTEN ===== */
-
-/* dropdown vullen */
 function refreshSavingsSelect(){
   const sel = qs("savingsSelect");
   if(!sel) return;
@@ -237,5 +251,14 @@ window.removeSavings = async (name) => {
 
   await deleteDoc(doc(db,"users",user.uid,"savings",name));
   delete savings[name];
+  updateUI();
+};
+
+/* ===== VASTE KOSTEN VERWIJDEREN ===== */
+window.removeFixedCost = async (name) => {
+  if(!confirm(`Weet je zeker dat je vaste kost "${name}" wilt verwijderen?`)) return;
+
+  await deleteDoc(doc(db,"users",user.uid,"fixedCosts",name));
+  delete fixedCosts[name];
   updateUI();
 };
