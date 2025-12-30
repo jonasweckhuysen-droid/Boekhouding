@@ -177,10 +177,10 @@ qs("saveFixedBtn").onclick = async ()=>{
     Wonen: Number(qs("fc-wonen").value||0),
     Auto: Number(qs("fc-auto").value||0),
     Verzekering: Number(qs("fc-verzekering").value||0),
-    Internet: Number(qs("fc-internet").value||0),
-    Telefoon: Number(qs("fc-telefoon").value||0),
-    "Lening auto": Number(qs("fc-lening-auto").value||0),
-    "Lening Moto": Number(qs("fc-lening-moto").value||0)
+    Internet: Number(qs("fc-internet")?.value||0),
+    Telefoon: Number(qs("fc-telefoon")?.value||0),
+    "Lening auto": Number(qs("fc-lening-auto")?.value||0),
+    "Lening Moto": Number(qs("fc-lening-moto")?.value||0)
   };
 
   for(const [name, amount] of Object.entries(data)){
@@ -195,8 +195,6 @@ qs("saveFixedBtn").onclick = async ()=>{
 /* ===== SPAARPOTTEN ===== */
 function refreshSavingsSelect(){
   const sel = qs("savingsSelect");
-  if(!sel) return;
-
   sel.innerHTML = "";
   Object.keys(savings).forEach(name=>{
     const o = document.createElement("option");
@@ -204,22 +202,23 @@ function refreshSavingsSelect(){
     o.innerText = name;
     sel.appendChild(o);
   });
-
-  if(sel.value) qs("savingsName").value = sel.value;
 }
 
-/* bedrag OPTELLEN */
+/* bedrag OPTELLEN of nieuwe spaarpot maken */
 qs("saveSavingsBtn").onclick = async ()=>{
-  const name = qs("savingsSelect").value || qs("savingsName").value.trim();
+  const name = qs("savingsName").value.trim();
   const amount = Number(qs("savingsAmount").value);
 
   if(!name || isNaN(amount)) return;
 
-  savings[name] = (savings[name] || 0) + amount;
+  if(!savings[name]) savings[name] = 0;
+  savings[name] += amount;
 
   await setDoc(doc(db,"users",user.uid,"savings",name), { amount: savings[name] });
 
   qs("savingsAmount").value = "";
+  qs("savingsName").value = "";
+  refreshSavingsSelect();
   updateUI();
 };
 
@@ -237,6 +236,7 @@ qs("renameSavingsBtn").onclick = async ()=>{
   delete savings[oldName];
   savings[newName] = savings[newName];
 
+  refreshSavingsSelect();
   updateUI();
 };
 
