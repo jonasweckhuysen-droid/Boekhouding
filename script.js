@@ -34,10 +34,10 @@ const login = async () => {
 };
 onAuthStateChanged(auth,user=>{if(!user) login(); else {window.user=user; loadData();}});
 
-// --- DOMContentLoaded --- 
+// --- Alles pas uitvoeren na DOMContentLoaded ---
 document.addEventListener("DOMContentLoaded", ()=>{
 
-  // --- Elements ---
+  // --- Elementen ---
   const modal=document.getElementById("modal");
   const dayModal=document.getElementById("dayModal");
   const fixedCostsModal=document.getElementById("fixedCostsModal");
@@ -48,18 +48,18 @@ document.addEventListener("DOMContentLoaded", ()=>{
   const bedrag=document.getElementById("bedrag");
   const recurring=document.getElementById("recurring");
 
-  const saveToSavings = (() => {
-    if(!document.getElementById("saveToSavings")) {
-      const select = document.createElement("select");
-      select.id="saveToSavings";
-      const defaultOption = document.createElement("option");
-      defaultOption.value="";
-      defaultOption.innerText="Geen spaarpot";
-      select.appendChild(defaultOption);
-      document.querySelector("#modal .box").insertBefore(select, document.querySelector("#modal .box div:last-child"));
-    }
-    return document.getElementById("saveToSavings");
-  })();
+  // Spaarpot dropdown
+  let saveToSavings = document.getElementById("saveToSavings");
+  if(!saveToSavings){
+    const select = document.createElement("select");
+    select.id="saveToSavings";
+    const defaultOption = document.createElement("option");
+    defaultOption.value="";
+    defaultOption.innerText="Geen spaarpot";
+    select.appendChild(defaultOption);
+    document.querySelector("#modal .box").insertBefore(select, document.querySelector("#modal .box div:last-child"));
+    saveToSavings = document.getElementById("saveToSavings");
+  }
 
   const saldoDiv=document.getElementById("saldo");
   const saldoBar=document.getElementById("saldoBar");
@@ -89,11 +89,10 @@ document.addEventListener("DOMContentLoaded", ()=>{
       saveToSavings.appendChild(opt);
     });
 
-    // Spaarpot beheer UI
     const container = document.getElementById("savingsList");
-    container.innerHTML = "";
-    if(savings.length===0){ container.innerText = "Geen spaarpotjes ingesteld"; return; }
-    savings.forEach((s,i)=>{
+    container.innerHTML="";
+    if(savings.length===0){ container.innerText="Geen spaarpotjes ingesteld"; return; }
+    savings.forEach(s=>{
       const div = document.createElement("div");
       div.className="entry";
       div.innerText=`${s.name}: € ${s.amount.toFixed(2)}`;
@@ -136,7 +135,6 @@ document.addEventListener("DOMContentLoaded", ()=>{
     if(!datumVal){alert("Vul een datum in"); return;}
     const categorie = categoryMap[bronVal] || "Overig";
 
-    // Spaarpot update
     const savings = getSavings();
     if(savingsIndex !== ""){
       const sIndex = parseInt(savingsIndex);
@@ -146,14 +144,14 @@ document.addEventListener("DOMContentLoaded", ()=>{
         updateSavingsUI();
         bedragVal=0;
       } else {
-        const spaarBedrag=Math.min(bedragVal,savings[sIndex].amount);
+        const spaarBedrag = Math.min(bedragVal, savings[sIndex].amount);
         savings[sIndex].amount -= spaarBedrag;
         saveSavingsToStorage(savings);
         updateSavingsUI();
         bedragVal -= spaarBedrag;
       }
     }
-    if(soortVal==="uitgave") bedragVal = -Math.abs(bedragVal);
+    if(soortVal==="uitgave") bedragVal=-Math.abs(bedragVal);
 
     await addDoc(collection(db,"users",user.uid,"items"),{
       soort:soortVal,
@@ -170,7 +168,7 @@ document.addEventListener("DOMContentLoaded", ()=>{
     loadData();
   }
 
-  // --- Fixed Costs Save ---
+  // --- Save Fixed Costs ---
   function saveFixedCosts(){
     const costs={
       lening:parseFloat(leningInput.value)||0,
@@ -188,15 +186,15 @@ document.addEventListener("DOMContentLoaded", ()=>{
   function updateSaldoUI(saldo=0, spent=0){
     const costs=JSON.parse(localStorage.getItem("fixedCosts"))||{};
     const totalFixed=Object.values(costs).reduce((a,b)=>a+b,0);
-    const expectedEnd = saldo - totalFixed;
+    const expectedEnd=saldo-totalFixed;
 
-    saldoDiv.innerHTML = saldo>=0 ? `💰 € ${saldo.toFixed(2).replace(".",",")}` : `🔴 € ${saldo.toFixed(2).replace(".",",")}`;
-    expectedEndDiv.innerHTML = `🔮 Verwacht einde maand: € ${expectedEnd.toFixed(2).replace(".",",")}`;
+    saldoDiv.innerHTML = saldo>=0?`💰 € ${saldo.toFixed(2).replace(".",",")}`:`🔴 € ${saldo.toFixed(2).replace(".",",")}`;
+    expectedEndDiv.innerHTML=`🔮 Verwacht einde maand: € ${expectedEnd.toFixed(2).replace(".",",")}`;
 
-    const budget = parseFloat(localStorage.getItem("monthlyBudget"))||0;
-    const percent = budget>0 ? Math.min((spent/budget)*100,100) : 0;
-    saldoBar.style.width = percent+"%";
-    saldoBar.style.background = percent>=100 ? "#ef4444" : percent>=80 ? "#facc15" : "#22c55e";
+    const budget=parseFloat(localStorage.getItem("monthlyBudget"))||0;
+    const percent=budget>0?Math.min((spent/budget)*100,100):0;
+    saldoBar.style.width=percent+"%";
+    saldoBar.style.background = percent>=100?"#ef4444":percent>=80?"#facc15":"#22c55e";
   }
 
   // --- Load Data ---
@@ -218,7 +216,7 @@ document.addEventListener("DOMContentLoaded", ()=>{
       if(e.bedrag<0 && d.getMonth()===m && d.getFullYear()===y) spent+=Math.abs(e.bedrag);
     });
 
-    window.items = items;
+    window.items=items;
     updateFixedCostsUI();
     updateSaldoUI(saldo,spent);
     updateSavingsUI();
@@ -230,18 +228,18 @@ document.addEventListener("DOMContentLoaded", ()=>{
   document.getElementById("saveEntryBtn")?.addEventListener("click", saveEntry);
   document.getElementById("closeModalBtn")?.addEventListener("click", closeModal);
   document.getElementById("closeFixedBtn")?.addEventListener("click", closeFixedCosts);
-
+  document.getElementById("saveFixedCostsBtn")?.addEventListener("click", saveFixedCosts);
   document.getElementById("savingsBtn").addEventListener("click", ()=>document.getElementById("savingsModal").style.display="flex");
   document.getElementById("closeSavingsBtn")?.addEventListener("click", ()=>document.getElementById("savingsModal").style.display="none");
-  document.getElementById("saveFixedCostsBtn")?.addEventListener("click", saveFixedCosts);
 
   // --- Klik buiten modals sluiten ---
   ["modal","dayModal","fixedCostsModal","savingsModal"].forEach(id=>{
-    const m = document.getElementById(id);
-    m.addEventListener("click",e=>{if(e.target===m)m.style.display="none"});
+    const m=document.getElementById(id);
+    if(m)m.addEventListener("click",e=>{if(e.target===m)m.style.display="none"});
   });
 
   // --- Init ---
   updateSavingsUI();
   updateFixedCostsUI();
+
 });
