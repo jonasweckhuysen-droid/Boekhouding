@@ -112,9 +112,14 @@ input,select{padding:10px;border-radius:10px;border:1px solid #cbd5f5}
 
 <div id="savingsModal">
   <div class="box">
-    <input id="savingsName" placeholder="Naam">
+    <select id="savingsSelect"></select>
+
+    <input id="savingsName" placeholder="Naam spaarpot">
     <input id="savingsAmount" placeholder="Bedrag (+ / -)">
-    <button class="btn save" id="saveSavingsBtn">Boek</button>
+
+    <button class="btn save" id="saveSavingsBtn">Boek bedrag</button>
+    <button class="btn view" id="renameSavingsBtn">Naam wijzigen</button>
+
     <button class="btn cancel" id="closeSavingsBtn">Sluiten</button>
   </div>
 </div>
