@@ -49,19 +49,19 @@ async function loadItems() {
 async function loadFixedCosts() {
   fixedCosts = {};
   const snap = await getDocs(collection(db, "users", user.uid, "fixedCosts"));
-  snap.forEach(d => fixedCosts[d.id] = d.data().amount);
+  snap.forEach(d => fixedCosts[d.id] = Number(d.data().amount));
 }
 
 async function loadSavings() {
   savings = {};
   const snap = await getDocs(collection(db, "users", user.uid, "savings"));
-  snap.forEach(d => savings[d.id] = d.data().amount);
+  snap.forEach(d => savings[d.id] = Number(d.data().amount));
 }
 
 /* ===== UI ===== */
 function updateUI() {
   const saldo = items.reduce((s, i) => s + i.bedrag, 0);
-  const fixedTotal = Object.values(fixedCosts).reduce((a, b) => a + Number(b), 0);
+  const fixedTotal = Object.values(fixedCosts).reduce((a, b) => a + b, 0);
 
   qs("saldo").innerText = `€ ${saldo.toFixed(2)}`;
   qs("expectedEnd").innerText =
@@ -88,75 +88,66 @@ function updateUI() {
   refreshSavingsSelect();
 }
 
-/* ===== FIXED COSTS SAVE ===== */
-qs("saveFixedBtn").onclick = async () => {
-  const inputs = [
-    ["Wonen", "fc-wonen"],
-    ["Verzekering", "fc-verzekering"],
-    ["Internet", "fc-internet"],
-    ["Telefoon", "fc-telefoon"],
-    ["Lening auto", "fc-lening-auto"],
-    ["Lening Moto", "fc-lening-moto"]
-  ];
+/* ===== DOM READY ===== */
+document.addEventListener("DOMContentLoaded", () => {
 
-  for (const [name, id] of inputs) {
-    const val = Number(qs(id)?.value);
-    if (!isNaN(val) && val > 0) {
-      await setDoc(doc(db, "users", user.uid, "fixedCosts", name), { amount: val });
+  qs("saveFixedBtn").onclick = async () => {
+    const fields = [
+      ["Wonen", "fc-wonen"],
+      ["Verzekering", "fc-verzekering"],
+      ["Internet", "fc-internet"],
+      ["Telefoon", "fc-telefoon"],
+      ["Lening auto", "fc-lening-auto"],
+      ["Lening Moto", "fc-lening-moto"]
+    ];
+
+    for (const [name, id] of fields) {
+      const val = Number(qs(id)?.value);
+      if (!isNaN(val) && val > 0) {
+        await setDoc(doc(db, "users", user.uid, "fixedCosts", name), { amount: val });
+      }
     }
-  }
 
-  await loadFixedCosts();
-  qs("fixedCostsModal").style.display = "none";
-  updateUI();
-};
+    await loadFixedCosts();
+    qs("fixedCostsModal").style.display = "none";
+    updateUI();
+  };
 
-/* ===== SPAARPOTTEN ===== */
-function refreshSavingsSelect() {
-  const sel = qs("savingsSelect");
-  sel.innerHTML = "";
-  Object.keys(savings).forEach(k => {
-    const o = document.createElement("option");
-    o.value = k;
-    o.innerText = k;
-    sel.appendChild(o);
-  });
-}
+  qs("saveSavingsBtn").onclick = async () => {
+    const name = qs("savingsName").value.trim();
+    const amount = Number(qs("savingsAmount").value);
+    if (!name || isNaN(amount)) return;
 
-qs("saveSavingsBtn").onclick = async () => {
-  const name = qs("savingsName").value.trim();
-  const amount = Number(qs("savingsAmount").value);
+    const total = (savings[name] || 0) + amount;
+    await setDoc(doc(db, "users", user.uid, "savings", name), { amount: total });
 
-  if (!name || isNaN(amount)) return;
+    await loadSavings();
+    qs("savingsName").value = "";
+    qs("savingsAmount").value = "";
+    updateUI();
+  };
 
-  const newAmount = (savings[name] || 0) + amount;
-  await setDoc(doc(db, "users", user.uid, "savings", name), { amount: newAmount });
+  qs("renameSavingsBtn").onclick = async () => {
+    const oldName = qs("savingsSelect").value;
+    const newName = qs("savingsName").value.trim();
+    if (!oldName || !newName || oldName === newName) return;
+    if (savings[newName]) return alert("Bestaat al");
 
-  await loadSavings();
-  qs("savingsName").value = "";
-  qs("savingsAmount").value = "";
-  updateUI();
-};
+    await setDoc(doc(db, "users", user.uid, "savings", newName), {
+      amount: savings[oldName]
+    });
+    await deleteDoc(doc(db, "users", user.uid, "savings", oldName));
 
-qs("renameSavingsBtn").onclick = async () => {
-  const oldName = qs("savingsSelect").value;
-  const newName = qs("savingsName").value.trim();
-  if (!oldName || !newName || oldName === newName) return;
-  if (savings[newName]) return alert("Bestaat al");
+    await loadSavings();
+    updateUI();
+  };
 
-  const amount = savings[oldName];
-  await setDoc(doc(db, "users", user.uid, "savings", newName), { amount });
-  await deleteDoc(doc(db, "users", user.uid, "savings", oldName));
+  qs("savingsSelect").onchange = () => {
+    qs("savingsName").value = qs("savingsSelect").value;
+  };
+});
 
-  await loadSavings();
-  updateUI();
-};
-
-qs("savingsSelect").onchange = () => {
-  qs("savingsName").value = qs("savingsSelect").value;
-};
-
-/* ===== DELETE ===== */
+/* ===== GLOBAL DELETE (MODULE FIX) ===== */
 window.removeSavings = async name => {
   if (!confirm(`Spaarpot "${name}" verwijderen?`)) return;
   await deleteDoc(doc(db, "users", user.uid, "savings", name));
@@ -170,3 +161,15 @@ window.removeFixedCost = async name => {
   await loadFixedCosts();
   updateUI();
 };
+
+/* ===== SELECT ===== */
+function refreshSavingsSelect() {
+  const sel = qs("savingsSelect");
+  sel.innerHTML = "";
+  Object.keys(savings).forEach(k => {
+    const o = document.createElement("option");
+    o.value = k;
+    o.innerText = k;
+    sel.appendChild(o);
+  });
+}
