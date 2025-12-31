@@ -1,11 +1,18 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-app.js";
 import {
-  getFirestore, collection, addDoc, getDocs,
-  doc, setDoc, deleteDoc
+  getFirestore,
+  collection,
+  addDoc,
+  getDocs,
+  doc,
+  setDoc,
+  deleteDoc
 } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-firestore.js";
 import {
-  getAuth, GoogleAuthProvider,
-  signInWithPopup, onAuthStateChanged
+  getAuth,
+  GoogleAuthProvider,
+  signInWithPopup,
+  onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-auth.js";
 
 /* ===== FIREBASE ===== */
@@ -20,7 +27,7 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 
-/* ===== STATE ===== */
+/* ===== DATA ===== */
 let user;
 let items = [];
 let fixedCosts = {};
@@ -33,10 +40,7 @@ onAuthStateChanged(auth, async u => {
   if (!u) await signInWithPopup(auth, provider);
   user = auth.currentUser;
 
-  await loadItems();
-  await loadFixedCosts();
-  await loadSavings();
-  updateUI();
+  await reloadAll();
 });
 
 /* ===== LOADERS ===== */
@@ -56,6 +60,13 @@ async function loadSavings() {
   savings = {};
   const snap = await getDocs(collection(db, "users", user.uid, "savings"));
   snap.forEach(d => savings[d.id] = Number(d.data().amount));
+}
+
+async function reloadAll() {
+  await loadItems();
+  await loadFixedCosts();
+  await loadSavings();
+  updateUI();
 }
 
 /* ===== UI ===== */
@@ -88,66 +99,84 @@ function updateUI() {
   refreshSavingsSelect();
 }
 
-/* ===== DOM READY ===== */
-document.addEventListener("DOMContentLoaded", () => {
+/* ===== ENTRIES ===== */
+qs("saveEntryBtn").onclick = async () => {
+  const bedrag = Number(qs("bedrag").value);
+  const soort = qs("soort").value;
+  if (!bedrag) return;
 
-  qs("saveFixedBtn").onclick = async () => {
-    const fields = [
-      ["Wonen", "fc-wonen"],
-      ["Verzekering", "fc-verzekering"],
-      ["Internet", "fc-internet"],
-      ["Telefoon", "fc-telefoon"],
-      ["Lening auto", "fc-lening-auto"],
-      ["Lening Moto", "fc-lening-moto"]
-    ];
+  await addDoc(collection(db, "users", user.uid, "items"), {
+    bedrag: soort === "uitgave" ? -Math.abs(bedrag) : Math.abs(bedrag),
+    datum: qs("datum").value,
+    categorie: qs("categorie").value
+  });
 
-    for (const [name, id] of fields) {
-      const val = Number(qs(id)?.value);
-      if (!isNaN(val) && val > 0) {
-        await setDoc(doc(db, "users", user.uid, "fixedCosts", name), { amount: val });
-      }
-    }
+  qs("modal").style.display = "none";
+  await reloadAll();
+};
 
-    await loadFixedCosts();
-    qs("fixedCostsModal").style.display = "none";
-    updateUI();
+/* ===== FIXED COSTS ===== */
+qs("saveFixedBtn").onclick = async () => {
+  const data = {
+    Wonen: Number(qs("fc-wonen")?.value || 0),
+    Auto: Number(qs("fc-auto")?.value || 0),
+    Verzekering: Number(qs("fc-verzekering")?.value || 0),
+    Internet: Number(qs("fc-internet")?.value || 0),
+    Telefoon: Number(qs("fc-telefoon")?.value || 0),
+    "Lening auto": Number(qs("fc-lening-auto")?.value || 0),
+    "Lening Moto": Number(qs("fc-lening-moto")?.value || 0)
   };
 
-  qs("saveSavingsBtn").onclick = async () => {
-    const name = qs("savingsName").value.trim();
-    const amount = Number(qs("savingsAmount").value);
-    if (!name || isNaN(amount)) return;
+  for (const [name, amount] of Object.entries(data)) {
+    await setDoc(doc(db, "users", user.uid, "fixedCosts", name), { amount });
+  }
 
-    const total = (savings[name] || 0) + amount;
-    await setDoc(doc(db, "users", user.uid, "savings", name), { amount: total });
+  qs("fixedCostsModal").style.display = "none";
+  await loadFixedCosts();
+  updateUI();
+};
 
-    await loadSavings();
-    qs("savingsName").value = "";
-    qs("savingsAmount").value = "";
-    updateUI();
-  };
+/* ===== SPAARPOTTEN ===== */
+function refreshSavingsSelect() {
+  const sel = qs("savingsSelect");
+  sel.innerHTML = "";
+  Object.keys(savings).forEach(name => {
+    const o = document.createElement("option");
+    o.value = name;
+    o.innerText = name;
+    sel.appendChild(o);
+  });
+}
 
-  qs("renameSavingsBtn").onclick = async () => {
-    const oldName = qs("savingsSelect").value;
-    const newName = qs("savingsName").value.trim();
-    if (!oldName || !newName || oldName === newName) return;
-    if (savings[newName]) return alert("Bestaat al");
+qs("saveSavingsBtn").onclick = async () => {
+  const name = qs("savingsName").value.trim();
+  const amount = Number(qs("savingsAmount").value);
+  if (!name || isNaN(amount)) return;
 
-    await setDoc(doc(db, "users", user.uid, "savings", newName), {
-      amount: savings[oldName]
-    });
-    await deleteDoc(doc(db, "users", user.uid, "savings", oldName));
+  const total = (savings[name] || 0) + amount;
+  await setDoc(doc(db, "users", user.uid, "savings", name), { amount: total });
 
-    await loadSavings();
-    updateUI();
-  };
+  qs("savingsName").value = "";
+  qs("savingsAmount").value = "";
+  await loadSavings();
+  updateUI();
+};
 
-  qs("savingsSelect").onchange = () => {
-    qs("savingsName").value = qs("savingsSelect").value;
-  };
-});
+qs("renameSavingsBtn").onclick = async () => {
+  const oldName = qs("savingsSelect").value;
+  const newName = qs("savingsName").value.trim();
+  if (!oldName || !newName || oldName === newName) return;
+  if (savings[newName]) return alert("Deze spaarpot bestaat al");
 
-/* ===== GLOBAL DELETE (MODULE FIX) ===== */
+  const amount = savings[oldName];
+  await setDoc(doc(db, "users", user.uid, "savings", newName), { amount });
+  await deleteDoc(doc(db, "users", user.uid, "savings", oldName));
+
+  await loadSavings();
+  updateUI();
+};
+
+/* ===== DELETE ===== */
 window.removeSavings = async name => {
   if (!confirm(`Spaarpot "${name}" verwijderen?`)) return;
   await deleteDoc(doc(db, "users", user.uid, "savings", name));
@@ -161,15 +190,3 @@ window.removeFixedCost = async name => {
   await loadFixedCosts();
   updateUI();
 };
-
-/* ===== SELECT ===== */
-function refreshSavingsSelect() {
-  const sel = qs("savingsSelect");
-  sel.innerHTML = "";
-  Object.keys(savings).forEach(k => {
-    const o = document.createElement("option");
-    o.value = k;
-    o.innerText = k;
-    sel.appendChild(o);
-  });
-}
