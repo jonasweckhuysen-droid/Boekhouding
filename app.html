@@ -18,7 +18,6 @@ body{
   display:flex;
   justify-content:center;
 }
-
 .container{
   width:100%;
   max-width:420px;
@@ -27,145 +26,33 @@ body{
   flex-direction:column;
   gap:20px;
 }
-
-header{
-  text-align:center;
-  color:#1e3a8a;
-}
-
-header h1{
-  margin:0;
-  font-size:26px;
-}
-
+header{text-align:center;color:#1e3a8a}
+header h1{margin:0;font-size:26px}
 .card{
   background:white;
   border-radius:22px;
   padding:18px;
   box-shadow:0 12px 30px rgba(0,0,0,.12);
 }
-
-.card h2{
-  margin:0;
-  font-size:28px;
-  color:#0f172a;
-}
-
-.card p{
-  margin:6px 0 0;
-  color:#475569;
-}
-
-.section-title{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  font-weight:600;
-  color:#1e293b;
-  margin-bottom:8px;
-}
-
-.section-title i{
-  color:#2563eb;
-}
-
-.actions{
-  display:flex;
-  gap:12px;
-}
-
+.section-title{display:flex;gap:8px;font-weight:600}
 .btn{
-  flex:1;
-  padding:12px;
-  border:none;
-  border-radius:16px;
-  font-size:15px;
-  cursor:pointer;
-  color:white;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:8px;
-  transition:transform .15s, box-shadow .15s;
+  padding:12px;border:none;border-radius:16px;
+  color:white;cursor:pointer;font-size:15px;
 }
-
-.btn:hover{
-  transform:translateY(-1px);
-  box-shadow:0 8px 18px rgba(0,0,0,.15);
-}
-
-.add{background:linear-gradient(135deg,#2563eb,#3b82f6)}
-.view{background:linear-gradient(135deg,#10b981,#34d399)}
-.save{background:linear-gradient(135deg,#1d4ed8,#2563eb)}
-.cancel{background:linear-gradient(135deg,#dc2626,#ef4444)}
-
+.add{background:#2563eb}
+.view{background:#10b981}
+.save{background:#1d4ed8}
+.cancel{background:#dc2626}
 #modal,#fixedCostsModal,#savingsModal{
-  position:fixed;
-  inset:0;
-  background:rgba(15,23,42,.6);
-  display:none;
-  align-items:center;
-  justify-content:center;
-  z-index:20;
+  position:fixed;inset:0;background:rgba(0,0,0,.6);
+  display:none;align-items:center;justify-content:center;
 }
-
 .box{
-  background:white;
-  width:90%;
-  max-width:360px;
-  padding:22px;
-  border-radius:24px;
-  display:flex;
-  flex-direction:column;
-  gap:12px;
-  animation:pop .2s ease-out;
+  background:white;padding:22px;border-radius:24px;
+  display:flex;flex-direction:column;gap:12px;
 }
-
-@keyframes pop{
-  from{transform:scale(.95);opacity:.5}
-  to{transform:scale(1);opacity:1}
-}
-
-input,select{
-  padding:12px;
-  border-radius:14px;
-  border:1px solid #c7d2fe;
-  font-size:14px;
-}
-
-input:focus,select:focus{
-  outline:none;
-  border-color:#2563eb;
-}
-
-.box h3{
-  margin:0 0 6px;
-  text-align:center;
-  color:#1e293b;
-}
-
-/* Grafieken */
-canvas{
-  margin-top:12px;
-  max-height:250px;
-}
-
-.fixed-cost-item{
-  display:flex;
-  align-items:center;
-  gap:6px;
-  margin-bottom:6px;
-}
-
-.fixed-cost-item input{
-  flex:1;
-}
-
-.fixed-cost-item button{
-  flex:0 0 auto;
-  padding:6px 8px;
-  font-size:14px;
-}
+input,select{padding:12px;border-radius:14px;border:1px solid #ccc}
+.fixed-cost-item{display:flex;gap:6px}
 </style>
 </head>
 
@@ -178,50 +65,22 @@ canvas{
 
 <div class="card">
   <h2 id="saldo">€ 0,00</h2>
-  <p id="expectedEnd">
-    <i class="fa-solid fa-crystal-ball"></i>
-    Verwacht einde maand: € 0,00
-  </p>
+  <p id="expectedEnd">🔮 Verwacht einde maand: € 0,00</p>
 </div>
 
 <div class="card">
-  <div class="section-title">
-    <i class="fa-solid fa-receipt"></i>
-    <span>Vaste kosten</span>
-  </div>
+  <div class="section-title"><i class="fa-solid fa-receipt"></i> Vaste kosten</div>
   <div id="fixedCostsList">—</div><br>
-  <button class="btn view" id="fixedCostsBtn">
-    <i class="fa-solid fa-gear"></i> Instellen
-  </button>
+  <button class="btn view" id="fixedCostsBtn">Instellen</button>
 </div>
 
 <div class="card">
-  <div class="section-title">
-    <i class="fa-solid fa-piggy-bank"></i>
-    <span>Spaarpotten</span>
-  </div>
+  <div class="section-title"><i class="fa-solid fa-piggy-bank"></i> Spaarpotten</div>
   <div id="savingsList">—</div><br>
-  <button class="btn view" id="savingsBtn">
-    <i class="fa-solid fa-wallet"></i> Beheer
-  </button>
+  <button class="btn view" id="savingsBtn">Beheer</button>
 </div>
 
-<div class="actions">
-  <button class="btn add" id="addBtn">
-    <i class="fa-solid fa-plus"></i> Toevoegen
-  </button>
-</div>
-
-<!-- Grafiekjes -->
-<div class="card">
-  <h3>📊 Spaarverdeling</h3>
-  <canvas id="savingsChart"></canvas>
-</div>
-
-<div class="card">
-  <h3>📉 Uitgaven per categorie</h3>
-  <canvas id="expenseChart"></canvas>
-</div>
+<button class="btn add" id="addBtn">➕ Toevoegen</button>
 
 </div>
 
@@ -229,10 +88,9 @@ canvas{
 
 <div id="modal">
   <div class="box">
-    <h3>Inkomst / Uitgave</h3>
     <select id="soort">
-      <option value="inkomst">💰 Inkomst</option>
-      <option value="uitgave">💸 Uitgave</option>
+      <option value="inkomst">Inkomst</option>
+      <option value="uitgave">Uitgave</option>
     </select>
     <input type="date" id="datum">
     <input type="number" id="bedrag" placeholder="Bedrag">
@@ -240,80 +98,37 @@ canvas{
       <option>Algemeen</option>
       <option>Wonen</option>
       <option>Auto</option>
-      <option>Vrije tijd</option>
     </select>
-    <button class="btn save" id="saveEntryBtn">
-      <i class="fa-solid fa-check"></i> Opslaan
-    </button>
-    <button class="btn cancel" id="closeModalBtn">
-      <i class="fa-solid fa-xmark"></i> Annuleren
-    </button>
+    <button class="btn save" id="saveEntryBtn">Opslaan</button>
+    <button class="btn cancel" id="closeModalBtn">Annuleren</button>
   </div>
 </div>
 
 <div id="fixedCostsModal">
   <div class="box">
-    <h3>Vaste kosten</h3>
-
-    <div class="fixed-cost-item">
-      <input id="fc-wonen" placeholder="🏠 Wonen">
-      <button class="btn cancel removeFixed" data-key="Wonen"><i class="fa-solid fa-trash"></i></button>
-    </div>
-    <div class="fixed-cost-item">
-      <input id="fc-auto" placeholder="🚗 Auto">
-      <button class="btn cancel removeFixed" data-key="Auto"><i class="fa-solid fa-trash"></i></button>
-    </div>
-    <div class="fixed-cost-item">
-      <input id="fc-verzekering" placeholder="🛡️ Verzekering">
-      <button class="btn cancel removeFixed" data-key="Verzekering"><i class="fa-solid fa-trash"></i></button>
-    </div>
-    <div class="fixed-cost-item">
-      <input id="fc-internet" placeholder="🌐 Internet">
-      <button class="btn cancel removeFixed" data-key="Internet"><i class="fa-solid fa-trash"></i></button>
-    </div>
-    <div class="fixed-cost-item">
-      <input id="fc-telefoon" placeholder="📱 Telefoon">
-      <button class="btn cancel removeFixed" data-key="Telefoon"><i class="fa-solid fa-trash"></i></button>
-    </div>
-    <div class="fixed-cost-item">
-      <input id="fc-lening-auto" placeholder="🚘 Lening auto">
-      <button class="btn cancel removeFixed" data-key="Lening auto"><i class="fa-solid fa-trash"></i></button>
-    </div>
-    <div class="fixed-cost-item">
-      <input id="fc-lening-moto" placeholder="🏍️ Lening Moto">
-      <button class="btn cancel removeFixed" data-key="Lening Moto"><i class="fa-solid fa-trash"></i></button>
-    </div>
-
-    <button class="btn save" id="saveFixedBtn">
-      <i class="fa-solid fa-save"></i> Opslaan
-    </button>
-    <button class="btn cancel" id="closeFixedBtn">
-      Sluiten
-    </button>
+    <input id="fc-wonen" placeholder="Wonen">
+    <input id="fc-auto" placeholder="Auto">
+    <input id="fc-verzekering" placeholder="Verzekering">
+    <input id="fc-internet" placeholder="Internet">
+    <input id="fc-telefoon" placeholder="Telefoon">
+    <input id="fc-lening-auto" placeholder="Lening auto">
+    <input id="fc-lening-moto" placeholder="Lening moto">
+    <button class="btn save" id="saveFixedBtn">Opslaan</button>
+    <button class="btn cancel" id="closeFixedBtn">Sluiten</button>
   </div>
 </div>
 
 <div id="savingsModal">
   <div class="box">
-    <h3>Spaarpotten</h3>
-
     <select id="savingsSelect"></select>
     <input id="savingsName" placeholder="Naam spaarpot">
-    <input id="savingsAmount" placeholder="Bedrag (+ / -)">
-
-    <button class="btn save" id="saveSavingsBtn">
-      <i class="fa-solid fa-coins"></i> Boek bedrag
-    </button>
-    <button class="btn view" id="renameSavingsBtn">
-      <i class="fa-solid fa-pen"></i> Naam wijzigen
-    </button>
-    <button class="btn cancel" id="closeSavingsBtn">
-      Sluiten
-    </button>
+    <input id="savingsAmount" placeholder="Bedrag">
+    <button class="btn save" id="saveSavingsBtn">Boek bedrag</button>
+    <button class="btn view" id="renameSavingsBtn">Naam wijzigen</button>
+    <button class="btn cancel" id="closeSavingsBtn">Sluiten</button>
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script type="module" src="script.js"></script>
 </body>
 </html>
